@@ -1,0 +1,17 @@
+[package]
+authors = ["Sankar boro <sankar.boro@yahoo.com>"]
+edition = "2018"
+name = "loony-web"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[workspace]
+members = [
+  "loony-http",
+  "loony-server",
+]
+
+[dependencies]
+loony-http = {path = "./loony-http"}
+loony-server = {path = "./loony-server"}
