@@ -12,9 +12,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "loony-test"
+version = "0.1.0"
+
+[[package]]
 name = "loony-web"
 version = "0.1.0"
 dependencies = [
  "loony-http",
  "loony-server",
+ "loony-test",
 ]

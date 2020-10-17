@@ -10,8 +10,10 @@ version = "0.1.0"
 members = [
   "loony-http",
   "loony-server",
+  "loony-test",
 ]
 
 [dependencies]
 loony-http = {path = "./loony-http"}
 loony-server = {path = "./loony-server"}
+loony-test = {path = "./loony-test"}

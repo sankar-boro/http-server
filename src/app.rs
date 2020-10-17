@@ -1,5 +1,6 @@
 use crate::service::ServiceConfig;
 use crate::route::Route;
+use crate::service::HttpServiceFactory;
 pub trait Builder {
     type Product;
 }
@@ -22,8 +23,7 @@ impl<'buf> App<'buf> {
         self.name.as_ref()
     }
 
-    pub fn route<T, Responder>(mut self, route: &'buf str, exec: T) -> Self where T: Fn() -> Responder {
-        let res = exec();
+    pub fn route<T>(mut self, route: &'buf str, factory: T) -> Self where T: HttpServiceFactory + 'static {
         self.routes.push(route);
         self
     }
@@ -32,10 +32,12 @@ impl<'buf> App<'buf> {
         self
     }
 
-    pub fn config<'a, 'b, T>(self, cnfg: T) -> Self where T: Fn(ServiceConfig<'a, 'b>) {
-        cnfg(ServiceConfig {
+    pub fn config<'a, 'b, T>(self, cnfg: T) -> Self where T: Fn(&mut ServiceConfig<'a, 'b>) {
+        let mut configs = ServiceConfig {
             routes: Vec::new()
-        });
+        };
+        cnfg(&mut configs);
+        // println!("Service Config: {:?}", configs.routes);
         self
     }
 }

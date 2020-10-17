@@ -21,16 +21,17 @@ fn delete() -> impl Responder {
     res
 }
 
-fn routes(mut config: ServiceConfig) {
+fn routes(config: &mut ServiceConfig) {
     config.service(
         route::scope("/user").route(
+            // let data = controller::get_user;
             // route::get("/get", controller::get_user)
-            route::get("/get")
+            route::get("/get", controller::get_user)
         ).route(
-            route::get("/delete")
+            route::get("/delete", controller::delete_user)
         )
     );
 }
 fn main() {
-    HttpServer::new(|| App::new().config(routes).route("/", index)).run();
+    HttpServer::new(|| App::new().config(routes).route("/", index).route("/delete", delete)).run();
 }
