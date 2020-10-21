@@ -15,6 +15,5 @@ impl HttpServer {
 
     pub fn run(&self) {
         let app = (self.app)();
-        println!("Hello world! Welcome to {}", app.app_name());
     }
 }

@@ -17,3 +17,4 @@ members = [
 loony-http = {path = "./loony-http"}
 loony-server = {path = "./loony-server"}
 loony-test = {path = "./loony-test"}
+fxhash = "0.2.1"
