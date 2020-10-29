@@ -11,10 +11,13 @@ members = [
   "loony-http",
   "loony-server",
   "loony-test",
+  "loony-service",
 ]
 
 [dependencies]
 loony-http = {path = "./loony-http"}
 loony-server = {path = "./loony-server"}
 loony-test = {path = "./loony-test"}
+loony-service = {path = "./loony-service"}
 fxhash = "0.2.1"
+http = "0.2.1"

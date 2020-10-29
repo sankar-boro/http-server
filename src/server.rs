@@ -2,14 +2,14 @@
 use crate::App;
 
 // pub type AppInstance = Box<dyn Fn() -> App + Send + Sync + 'static>;
-pub type AppInstance = Box<dyn Fn() -> App<'static> + 'static>;
+pub type AppInstance = Box<dyn Fn() -> App + 'static>;
 
 pub struct HttpServer {
     app: AppInstance,
 }
 
 impl HttpServer {
-    pub fn new<F: Fn() -> App<'static> + 'static>(app: F) -> Self {
+    pub fn new<F: Fn() -> App + 'static>(app: F) -> Self {
         Self { app: Box::new(app) }
     }
 

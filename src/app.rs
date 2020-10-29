@@ -1,26 +1,26 @@
 use crate::service::ServiceConfig;
-use crate::route::Route;
-use crate::service::HttpServiceFactory;
+use crate::route::RouteService;
+use crate::service::{HttpServiceFactory, AppServiceFactory, ServiceFactoryWrapper};
 use super::AppState;
 use crate::extensions::Extensions;
 
 pub trait Builder {
     type Product;
 }
-#[derive(Debug)]
-pub struct App<'route> {
+// #[derive(Debug)]
+pub struct App {
     app_data:AppState,
     extensions: Extensions,
-    routes:Vec<&'route str>,
+    services: Vec<Box<dyn AppServiceFactory>>,
 }
-impl<'buf> App<'buf> {
+impl App {
     pub fn new() -> Self {
         Self {
             app_data: AppState {
                 name: "".to_owned(),
             },
-            routes: Vec::new(),
-            extensions: Extensions::new()
+            extensions: Extensions::new(),
+            services: Vec::new(),
         }
     }
 
@@ -29,12 +29,12 @@ impl<'buf> App<'buf> {
         self
     }
 
-    pub fn route<T>(mut self, route: &'buf str, factory: T) -> Self where T: HttpServiceFactory + 'static {
-        self.routes.push(route);
+    pub fn service<T>(mut self, route: &str, factory: T) -> Self where T: HttpServiceFactory + 'static {
+        self.services.push(Box::new(ServiceFactoryWrapper::new(factory)));
         self
     }
 
-    pub fn service<'a, 'b, T>(self, cnfg: T) -> Self where T: Fn(&mut ServiceConfig<'a, 'b>) {
+    pub fn configure<'a, 'b, T>(self, cnfg: T) -> Self where T: Fn(&mut ServiceConfig<'a, 'b>) {
         let mut configs = ServiceConfig {
             routes: Vec::new()
         };
@@ -43,6 +43,6 @@ impl<'buf> App<'buf> {
     }
 }
 
-impl<'buf> Builder for App<'buf> {
-    type Product = App<'buf>;
+impl Builder for App {
+    type Product = App;
 }

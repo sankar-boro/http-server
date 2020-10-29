@@ -41,9 +41,7 @@ fn main() {
         .app_data( AppState {
             name: "Loony".to_owned(),
         })
-        .service(routes)
-        .route("/", index)
-        .route("/delete", delete)
+        .configure(routes)
     )
     .run();
 }

@@ -1,3 +1,4 @@
+use crate::service::HttpServiceFactory;
 // #[derive(Debug)]
 pub struct Route<'route, 'scope> {
     name: Vec<(&'route str, Box<dyn Fn() + 'static>)>,
@@ -21,4 +22,11 @@ pub fn scope(scope: &str) -> Route {
 
 pub fn get<T>(route: &str, get:T) -> (&str, T) where T: Fn() {
     (route, get)
+}
+
+    // pub fn route<T>(mut self, route: &str, factory: T) -> Self where T: HttpServiceFactory + 'static {
+#[derive(Debug)]
+pub struct RouteService<T> where T: HttpServiceFactory + 'static {
+    route: String,
+    serve: T
 }

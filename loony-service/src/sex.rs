@@ -1,34 +1,35 @@
-use std::{
-    future::Future,
-    pin::Pin,
-    sync::{Arc, Mutex},
-    task::{Context, Poll, Waker},
-    thread,
-    time::Duration,
+use {
+    std::{
+        future::Future,
+        pin::Pin,
+        sync::{Arc, Mutex},
+        task::{Context, Poll, Waker},
+        thread,
+        time::Duration,
+    }
 };
-
-pub struct TimerFuture {
-    shared_state: Arc<Mutex<SharedState>>,
+pub struct Sex {
+    girlfriend: Arc<Mutex<GirlFriend>>,
 }
 
 /// Shared state between the future and the waiting thread
-struct SharedState {
+struct GirlFriend {
     /// Whether or not the sleep time has elapsed
-    completed: bool,
+    is_hot: bool,
 
     /// The waker for the task that `TimerFuture` is running on.
     /// The thread can use this after setting `completed = true` to tell
     /// `TimerFuture`'s task to wake up, see that `completed = true`, and
     /// move forward.
-    waker: Option<Waker>,
+    on_search: Option<Waker>,
 }
 
-impl Future for TimerFuture {
+impl Future for Sex {
     type Output = ();
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         // Look at the shared state to see if the timer has already completed.
-        let mut shared_state = self.shared_state.lock().unwrap();
-        if shared_state.completed {
+        let mut gf = self.girlfriend.lock().unwrap();
+        if gf.is_hot {
             Poll::Ready(())
         } else {
             // Set waker so that the thread can wake up the current task
@@ -43,37 +44,34 @@ impl Future for TimerFuture {
             //
             // N.B. it's possible to check for this using the `Waker::will_wake`
             // function, but we omit that here to keep things simple.
-            shared_state.waker = Some(cx.waker().clone());
+            gf.on_search = Some(cx.waker().clone());
             Poll::Pending
         }
     }
 }
 
-impl TimerFuture {
+impl Sex {
     /// Create a new `TimerFuture` which will complete after the provided
     /// timeout.
-    pub fn new(duration: Duration) -> Self {
-        let shared_state = Arc::new(Mutex::new(SharedState {
-            completed: false,
-            waker: None,
+    pub fn duration(duration: Duration) -> Self {
+        let new_gf = Arc::new(Mutex::new(GirlFriend {
+            is_hot: false,
+            on_search: None,
         }));
 
         // Spawn the new thread
-        let thread_shared_state = shared_state.clone();
+        let current_gf = new_gf.clone();
         thread::spawn(move || {
             thread::sleep(duration);
-            let mut shared_state = thread_shared_state.lock().unwrap();
+            let mut c_gf = current_gf.lock().unwrap();
             // Signal that the timer has completed and wake up the last
             // task on which the future was polled, if one exists.
-            shared_state.completed = true;
-            if let Some(waker) = shared_state.waker.take() {
-                waker.wake()
+            c_gf.is_hot = true;
+            if let Some(sher_mode) = c_gf.on_search.take() {
+                sher_mode.wake()
             }
         });
 
-        TimerFuture { shared_state }
+        Sex { girlfriend:new_gf }
     }
-}
-fn main() {
-
 }
