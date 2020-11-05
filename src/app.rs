@@ -11,7 +11,7 @@ pub trait Builder {
 pub struct App {
     app_data:AppState,
     extensions: Extensions,
-    services: Vec<Box<dyn AppServiceFactory>>,
+    pub services: Vec<Box<dyn AppServiceFactory>>,
 }
 impl App {
     pub fn new() -> Self {

@@ -15,5 +15,8 @@ impl HttpServer {
 
     pub fn run(&self) {
         let app = (self.app)();
+        for service in app.services {
+            // println!("{:?}", service);
+        }
     }
 }

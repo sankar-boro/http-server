@@ -31,6 +31,10 @@ fn routes(config: &mut ServiceConfig) {
         )
     );
 }
+
+// fn home() -> impl Responder {
+
+// }
 #[derive(Debug)]
 struct AppState {
     name: String,
@@ -42,6 +46,7 @@ fn main() {
             name: "Loony".to_owned(),
         })
         .configure(routes)
+        .service("/", index)
     )
     .run();
 }

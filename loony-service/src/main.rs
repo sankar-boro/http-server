@@ -25,5 +25,4 @@ impl service::Service for User {
     }
 }
 fn main() {
-
 }
