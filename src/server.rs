@@ -1,5 +1,6 @@
 // use loony_http;
-use crate::App;
+use crate::{App, AppState};
+use std::any::{Any, TypeId};
 
 // pub type AppInstance = Box<dyn Fn() -> App + Send + Sync + 'static>;
 pub type AppInstance = Box<dyn Fn() -> App + 'static>;
@@ -15,8 +16,9 @@ impl HttpServer {
 
     pub fn run(&self) {
         let app = (self.app)();
-        for service in app.services {
-            // println!("{:?}", service);
+        println!("{:?}", app.extensions.get::<AppState>());
+        for service in app.services.iter() {
+            println!("Route name: {} | Route response: {}", service.get_route(), service.get_response());
         }
     }
 }

@@ -5,6 +5,7 @@ mod service;
 mod route;
 mod controller;
 mod extensions;
+mod web;
 
 use service::ServiceConfig;
 use app::App;
@@ -24,17 +25,15 @@ fn delete() -> impl Responder {
 
 fn routes(config: &mut ServiceConfig) {
     config.service(
-        route::scope("/user").route(
-            route::get("/get", controller::get_user)
+        route::scope("/user")
+        .route(
+            web::get("/get", controller::get_user)
         ).route(
-            route::get("/delete", controller::delete_user)
+            web::get("/delete", controller::delete_user)
         )
     );
 }
 
-// fn home() -> impl Responder {
-
-// }
 #[derive(Debug)]
 struct AppState {
     name: String,

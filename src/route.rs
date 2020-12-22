@@ -1,21 +1,24 @@
 use crate::service::HttpServiceFactory;
 // #[derive(Debug)]
-pub struct Route<'route, 'scope> {
-    name: Vec<(&'route str, Box<dyn Fn() + 'static>)>,
-    scope: &'scope str,
+pub struct Route {
+    name: Vec<(String, Box<dyn Fn() + 'static>)>,
+    scope: String,
 }
 
-impl<'route, 'scope> Route<'route, 'scope> {
+impl<'route> Route<> {
     pub fn route<T>(mut self, route: (&'route str, T)) -> Self where T: Fn() + 'static {
-        self.name.push((route.0, Box::new(route.1)));
+        self.name.push((route.0.to_owned(), Box::new(route.1)));
         self
     }
 
+    pub fn get_scope(&self) -> &str {   
+        &self.scope
+    }
 }
 
 pub fn scope(scope: &str) -> Route {
     Route{
-        scope,
+        scope: scope.to_owned(),
         name:Vec::new(),
     }
 }
