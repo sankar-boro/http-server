@@ -12,7 +12,7 @@ pub struct App {
     app_data:AppState,
     pub extensions: Extensions,
     pub services: Vec<Box<dyn AppServiceFactory>>,
-    config: Box<dyn ServiceConfigFactory>,
+    pub config: Box<dyn ServiceConfigFactory>,
 }
 
 // #[derive(Debug)]
@@ -45,7 +45,7 @@ impl App {
         self
     }
 
-    pub fn get_app_data(&self) -> &AppState {
+    pub fn get_config(&self) -> &AppState {
         &self.app_data
     }
 

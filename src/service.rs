@@ -19,10 +19,14 @@ impl ServiceConfig {
     }
 }
 
-pub trait ServiceConfigFactory {}
+pub trait ServiceConfigFactory {
+    fn get_routes(&self) -> &Vec<Route>;
+}
 
 impl ServiceConfigFactory for ServiceConfig {
-
+    fn get_routes(&self) -> &Vec<Route> {
+        &self.routes
+    }
 }
 
 pub trait HttpServiceFactory {

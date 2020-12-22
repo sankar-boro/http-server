@@ -20,5 +20,10 @@ impl HttpServer {
         for service in app.services.iter() {
             println!("Route name: {} | Route response: {}", service.get_route(), service.get_response());
         }
+        let configs = app.config.get_routes();
+
+        for config in configs.iter() {
+            println!("Route scope: {:?} | Scoped Routes: {:?}", config.get_scope(), config.get_scope_routes());
+        }
     }
 }

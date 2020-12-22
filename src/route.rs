@@ -1,18 +1,31 @@
-use crate::service::HttpServiceFactory;
+use crate::{responder::Responder, service::HttpServiceFactory};
 // #[derive(Debug)]
 pub struct Route {
-    name: Vec<(String, Box<dyn Fn() + 'static>)>,
-    scope: String,
+    name: Vec<(String, Box<dyn HttpServiceFactory>)>,
+    pub scope: String,
 }
 
 impl<'route> Route<> {
-    pub fn route<T>(mut self, route: (&'route str, T)) -> Self where T: Fn() + 'static {
+    pub fn route<T>(mut self, route: (&'route str, T)) -> Self where T: HttpServiceFactory + 'static {
         self.name.push((route.0.to_owned(), Box::new(route.1)));
         self
     }
 
     pub fn get_scope(&self) -> &str {   
         &self.scope
+    }
+
+    pub fn get_scope_routes(&self) -> String {
+        let mut _route = String::from("");
+        for route in self.name.iter() {
+            _route.push_str(" Route name:");
+            _route.push_str(&route.0);
+            _route.push_str(", Route response:");
+            let data = &route.1;
+            let data = data.get_response();
+            _route.push_str(&data);
+        }
+        _route
     }
 }
 
