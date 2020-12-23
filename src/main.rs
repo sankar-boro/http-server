@@ -13,6 +13,10 @@ use loony_http::Response;
 use responder::Responder;
 use server::HttpServer;
 
+struct User {
+    name: String,
+}
+
 fn index() -> impl Responder {
     let res = Response::from(String::from("Loony"));
     res
@@ -38,8 +42,9 @@ fn routes(config: &mut ServiceConfig) {
 struct AppState {
     name: String,
 }
+
 fn main() {
-    HttpServer::new(|| 
+    HttpServer::new(move ||
         App::new()
         .app_data( AppState {
             name: "Loony".to_owned(),

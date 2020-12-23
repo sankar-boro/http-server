@@ -3,6 +3,8 @@ use loony_http::Response;
 
 use crate::responder;
 
+struct User{}
+
 pub fn get_user() -> impl Responder {
     let res = Response::from(String::from("Loony"));
     res

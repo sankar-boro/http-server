@@ -45,10 +45,6 @@ impl App {
         self
     }
 
-    pub fn get_config(&self) -> &AppState {
-        &self.app_data
-    }
-
 }
 
 impl Builder for App {
