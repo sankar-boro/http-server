@@ -1,4 +1,5 @@
 use std::env;
+use futures::Future;
 use crate::route::Route;
 use crate::responder::Responder;
 
@@ -46,6 +47,17 @@ where
     data.respond()
   }
 }
+
+impl<T, R, L> HttpServiceFactory for T 
+where 
+  T: Fn(L) -> R, R:Responder 
+{
+  fn get_response(&self) -> String {
+    let data = self();
+    data.respond()
+  }
+}
+
 pub(crate) struct ServiceFactoryWrapper<T> {
   route: String,
   factory: Option<T>,
@@ -80,6 +92,5 @@ where
     return String::from("");
   }
 }
-
 
 

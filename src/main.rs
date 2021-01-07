@@ -17,7 +17,7 @@ struct User {
     name: String,
 }
 
-fn index() -> impl Responder {
+fn index(data: web::FormData<User>) -> impl Responder {
     let res = Response::from(String::from("Loony"));
     res
 }
