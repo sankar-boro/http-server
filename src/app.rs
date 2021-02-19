@@ -33,6 +33,11 @@ impl App {
         self
     }
 
+    pub fn route<T>(mut self, route: &str, factory: T) -> Self where T: HttpServiceFactory + 'static {
+        self.services.push(Box::new(ServiceFactoryWrapper::new(route, factory)));
+        self
+    }
+
     pub fn service<T>(mut self, route: &str, factory: T) -> Self where T: HttpServiceFactory + 'static {
         self.services.push(Box::new(ServiceFactoryWrapper::new(route, factory)));
         self

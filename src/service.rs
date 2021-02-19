@@ -3,6 +3,7 @@ use futures::Future;
 use crate::route::Route;
 use crate::responder::Responder;
 use crate::web::FormDataExtractor;
+use std::marker::PhantomData;
 
 struct Arguments {
     name: Option<String>,
@@ -39,15 +40,15 @@ pub trait HttpServiceFactory {
   fn get_response(&self) -> String;
 }
 
-// impl<T, R> HttpServiceFactory for T 
-// where 
-//   T: Fn() -> R, R:Responder 
-// {
-//   fn get_response(&self) -> String {
-//     let data = self();
-//     data.respond()
-//   }
-// }
+impl<T, R> HttpServiceFactory for T 
+where 
+  T: Fn() -> R, R:Responder 
+{
+  fn get_response(&self) -> String {
+    let data = self();
+    data.respond()
+  }
+}
 
 // impl<T, R, L> HttpServiceFactory for T 
 // where 
@@ -94,7 +95,7 @@ where
   }
 }
 
-pub trait Factory<T, R>
+pub trait Factory<T, R>: Clone + 'static
 where
     R: Responder
 {
@@ -111,10 +112,45 @@ where
     }
 }
 
+pub struct Handler<F, T, R>
+where
+    F: Factory<T, R>,
+    R: Responder,
+    {
+      hnd: F,
+      _t: PhantomData<(T, R)>,
+}
+
+impl<F, T, R> Handler<F, T, R>
+where
+    F: Factory<T, R>,
+    R: Responder,
+{
+    pub fn new(hnd: F) -> Self {
+        Handler {
+            hnd,
+            _t: PhantomData,
+        }
+    }
+}
+
+impl<F, T, R> Clone for Handler<F, T, R>
+where
+    F: Factory<T, R>,
+    R: Responder,
+{
+    fn clone(&self) -> Self {
+        Handler {
+            hnd: self.hnd.clone(),
+            _t: PhantomData,
+        }
+    }
+}
+
 /// FromRequest trait impl for tuples
 macro_rules! factory_tuple ({ $(($n:tt, $T:ident)),+} => {
     impl<Func, $($T,)+ Res> Factory<($($T,)+), Res> for Func
-    where Func: Fn($($T,)+) -> Res,
+    where Func: Fn($($T,)+) -> Res + Clone + 'static,
           Res: Responder,
     {
         fn call(&self, param: ($($T,)+)) -> Res {
@@ -128,7 +164,7 @@ mod m {
     use super::*;
 
   factory_tuple!((0, FormDataExtractor));
-  // factory_tuple!((0, A), (1, B));
+  factory_tuple!((0, FormDataExtractor), (1, String));
   // factory_tuple!((0, A), (1, B), (2, C));
   // factory_tuple!((0, A), (1, B), (2, C), (3, D));
   // factory_tuple!((0, A), (1, B), (2, C), (3, D), (4, E));

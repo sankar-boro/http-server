@@ -50,7 +50,7 @@ fn main() {
             name: "Loony".to_owned(),
         })
         .configure(routes)
-        // .service("/", index)
+        // .route("/", web::get("/get", controller::get_user))
     )
     .run();
-}
+}   
