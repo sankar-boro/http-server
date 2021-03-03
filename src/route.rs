@@ -3,7 +3,7 @@ use crate::service::{Factory, Handler};
 
 // #[derive(Debug)]
 pub struct Route {
-    name: Vec<(String, Box<dyn HttpAppServiceFactory>)>,
+    pub name: Vec<(String, Box<dyn HttpAppServiceFactory>)>,
     pub scope: String,
 }
 

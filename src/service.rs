@@ -4,6 +4,7 @@ use crate::route::Route;
 use crate::responder::Responder;
 use crate::web::FormDataExtractor;
 use std::marker::PhantomData;
+use crate::Request;
 
 struct Arguments {
     name: Option<String>,
@@ -42,10 +43,13 @@ pub trait HttpServiceFactory {
 
 impl<T, R> HttpServiceFactory for T 
 where 
-  T: Fn() -> R, R:Responder 
+  T: Fn(Request) -> R, R:Responder 
 {
   fn get_response(&self) -> String {
-    (*self)().respond()
+    self(Request{}).respond()
+    // "".to_string()
+    // (*self)().respond()
+    // todo!()
   }
 }
 

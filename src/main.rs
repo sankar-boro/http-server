@@ -13,6 +13,7 @@ use loony_http::Response;
 use responder::Responder;
 use server::HttpServer;
 
+pub struct Request;
 struct User {
     name: String,
 }
