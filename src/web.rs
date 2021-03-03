@@ -11,7 +11,7 @@ impl<T> FormDataExtractor for FormData<T> {
   
 }
 
-pub fn get<F, I, R>(route: &str,  get:F) -> (&str, F) where F: Factory<I, R>, R: Responder {
+pub fn get<F>(route: &str,  get:F) -> (&str, F) where F: HttpServiceFactory + 'static {
   (route, get)
 }
 

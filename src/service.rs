@@ -45,8 +45,7 @@ where
   T: Fn() -> R, R:Responder 
 {
   fn get_response(&self) -> String {
-    let data = self();
-    data.respond()
+    (*self)().respond()
   }
 }
 
@@ -65,10 +64,22 @@ pub(crate) struct ServiceFactoryWrapper<T> {
   factory: Option<T>,
 }
 
+pub(crate) struct HttpServiceFactoryWrapper<T> {
+  factory: Option<T>,
+}
+
 impl<T> ServiceFactoryWrapper<T> {
   pub fn new(route:&str, factory: T) -> Self {
     Self {
       route: route.to_owned(),
+      factory: Some(factory),
+    }
+  }
+}
+
+impl<T> HttpServiceFactoryWrapper<T> {
+  pub fn new(factory: T) -> Self {
+    Self {
       factory: Some(factory),
     }
   }
@@ -86,6 +97,23 @@ where
   fn get_route(&self) -> String {
     self.route.clone()
   }
+
+  fn get_response(&self) -> String {
+    if let Some(f) = &self.factory {
+      return f.get_response();
+    }
+    return String::from("");
+  }
+}
+
+pub trait HttpAppServiceFactory {
+  fn get_response(&self) -> String;
+}
+
+impl<T> HttpAppServiceFactory for HttpServiceFactoryWrapper<T>
+where
+  T: HttpServiceFactory,
+{
 
   fn get_response(&self) -> String {
     if let Some(f) = &self.factory {
