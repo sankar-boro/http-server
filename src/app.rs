@@ -1,6 +1,6 @@
-use crate::service::{ServiceConfig, ServiceConfigFactory};
+use crate::service::{HttpServiceFactoryWrapper, ServiceConfig, ServiceConfigFactory};
 use crate::route::RouteService;
-use crate::service::{HttpServiceFactory, AppServiceFactory, ServiceFactoryWrapper};
+use crate::service::{HttpServiceFactory, AppServiceFactory, ServiceFactoryWrapper, HttpAppServiceFactory};
 use super::AppState;
 use crate::extensions::Extensions;
 
@@ -11,7 +11,7 @@ pub trait Builder {
 pub struct App {
     app_data:AppState,
     pub extensions: Extensions,
-    pub services: Vec<Box<dyn AppServiceFactory>>,
+    pub services: Vec<(String ,Box<dyn HttpAppServiceFactory>)>,
     pub config: Box<dyn ServiceConfigFactory>,
 }
 
@@ -33,13 +33,13 @@ impl App {
         self
     }
 
-    pub fn route<T>(mut self, route: &str, factory: T) -> Self where T: HttpServiceFactory + 'static {
-        self.services.push(Box::new(ServiceFactoryWrapper::new(route, factory)));
+    pub fn route<T>(mut self, route: (&str, T)) -> Self where T: HttpServiceFactory + 'static {
+        self.services.push((route.0.to_string(), Box::new(HttpServiceFactoryWrapper::new(route.1))));
         self
     }
 
     pub fn service<T>(mut self, route: &str, factory: T) -> Self where T: HttpServiceFactory + 'static {
-        self.services.push(Box::new(ServiceFactoryWrapper::new(route, factory)));
+        self.services.push((route.to_string(), Box::new(HttpServiceFactoryWrapper::new(factory))));
         self
     }
 

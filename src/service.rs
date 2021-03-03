@@ -1,16 +1,7 @@
-use std::env;
-use futures::Future;
 use crate::route::Route;
 use crate::responder::Responder;
-use crate::web::FormDataExtractor;
 use std::marker::PhantomData;
 use crate::Request;
-
-struct Arguments {
-    name: Option<String>,
-    age: Option<String>,
-}
-
 pub struct ServiceConfig {
   pub routes:Vec<Route>,
 }
@@ -47,21 +38,9 @@ where
 {
   fn get_response(&self) -> String {
     self(Request{}).respond()
-    // "".to_string()
-    // (*self)().respond()
-    // todo!()
   }
 }
 
-// impl<T, R, L> HttpServiceFactory for T 
-// where 
-//   T: Fn(L) -> R, R:Responder 
-// {
-//   fn get_response(&self) -> String {
-//     let data = self();
-//     data.respond()
-//   }
-// }
 
 pub(crate) struct ServiceFactoryWrapper<T> {
   route: String,
@@ -153,18 +132,18 @@ where
       _t: PhantomData<(T, R)>,
 }
 
-impl<F, T, R> Handler<F, T, R>
-where
-    F: Factory<T, R>,
-    R: Responder,
-{
-    pub fn new(hnd: F) -> Self {
-        Handler {
-            hnd,
-            _t: PhantomData,
-        }
-    }
-}
+// impl<F, T, R> Handler<F, T, R>
+// where
+//     F: Factory<T, R>,
+//     R: Responder,
+// {
+//     pub fn new(hnd: F) -> Self {
+//         Handler {
+//             hnd,
+//             _t: PhantomData,
+//         }
+//     }
+// }
 
 impl<F, T, R> Clone for Handler<F, T, R>
 where

@@ -51,7 +51,7 @@ fn main() {
             name: "Loony".to_owned(),
         })
         .configure(routes)
-        // .route("/", web::get("/get", controller::get_user))
+        .route(web::get("/", controller::get_user))
     )
     .run();
 }   
