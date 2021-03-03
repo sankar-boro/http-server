@@ -1,18 +1,14 @@
 use crate::{responder::Responder, service::HttpServiceFactory};
 use crate::service::{Factory, Handler};
 
-type BoxedRouteService = String;
-
 // #[derive(Debug)]
 pub struct Route {
-    // name: Vec<(String, Box<dyn HttpServiceFactory>)>,
-    name: BoxedRouteService,
+    // name: Vec<Box<dyn HttpServiceFactory>>,
     pub scope: String,
 }
 
 impl<'route> Route {
     pub fn route<T, I, R>(mut self, route: (&'route str, T)) -> Self where T: Factory<I, R> + 'static, R: Responder {
-        Handler::new(route.1);
         self
     }
 
@@ -36,8 +32,8 @@ impl<'route> Route {
 
 pub fn scope(scope: &str) -> Route {
     Route{
-        scope: scope.to_owned(),
-        name:Vec::new(),
+        scope: scope.to_string(),
+        // name: scope.to_string(),
     }
 }
 
