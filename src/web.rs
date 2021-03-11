@@ -1,27 +1,6 @@
-use crate::service::{HttpServiceFactory, Factory};
-use crate::responder::Responder;
+use futures::Future;
+use crate::service::{Factory};
 
-pub trait FormDataExtractor {}
-
-pub struct FormData<T> {
-  data: T,
-}
-
-impl<T> FormDataExtractor for FormData<T> {
-  
-}
-
-pub fn get<F>(route: &str,  get:F) -> (&str, F) where F: HttpServiceFactory + 'static {
+pub fn get<F, I, R>(route: &str,  get:F) -> (&str, F) where F: Factory<I, R> + 'static, R: Future<Output=String> {
   (route, get)
 }
-
-
-// pub fn to<F, I, R, U>(handler: F) -> Route
-// where
-//     F: Factory<I, R, U>,
-//     I: FromRequest + 'static,
-//     R: Future<Output = U> + 'static,
-//     U: Responder + 'static,
-// {
-//     Route::new().to(handler)
-// }

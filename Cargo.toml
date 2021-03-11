@@ -28,3 +28,8 @@ loony-help = {path = "./loony-help"}
 fxhash = "0.2.1"
 http = "0.2.1"
 futures = "0.3.8"
+
+
+[dependencies.async-std]
+version = "1.7.0"
+features = ["attributes"]

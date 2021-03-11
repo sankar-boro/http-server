@@ -1,14 +1,16 @@
-use crate::{responder::Responder, service::{HttpServiceFactory, HttpAppServiceFactory, ServiceFactoryWrapper, HttpServiceFactoryWrapper}};
-use crate::service::{Factory, Handler};
+use futures::Future;
+
+use crate::{responder::Responder, service::{HttpServiceFactory, HttpServiceFactoryWrapper}};
+use crate::service::{Factory};
 
 // #[derive(Debug)]
 pub struct Route {
-    pub name: Vec<(String, Box<dyn HttpAppServiceFactory>)>,
+    pub name: Vec<(String, Box<dyn HttpServiceFactory>)>,
     pub scope: String,
 }
 
 impl<'route> Route {
-    pub fn route<T>(mut self, route: (&'route str, T)) -> Self where T: HttpServiceFactory + 'static {
+    pub fn route<T, I: 'static, R>(mut self, route: (&'route str, T)) -> Self where T: Factory<I, R> + 'static, R: Future<Output=String> + 'static {
         self.name.push((route.0.to_string(), Box::new(HttpServiceFactoryWrapper::new(route.1))));
         self
     }
@@ -19,11 +21,11 @@ impl<'route> Route {
 
     pub fn get_scope_routes(&self) -> String {
         let mut _route = String::from("");
-        for route in self.name.iter() {
-            _route.push_str(" Route name:");
-            _route.push_str(&route.0);
-            println!("Response: {}", route.1.get_response());
-        }
+        // for route in self.name.iter() {
+        //     _route.push_str(" Route name:");
+        //     _route.push_str(&route.0);
+        //     println!("Response: {}", route.1.call());
+        // }
         _route
     }
 }

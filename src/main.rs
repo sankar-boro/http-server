@@ -18,13 +18,8 @@ struct User {
     name: String,
 }
 
-fn index(data: web::FormData<User>) -> impl Responder {
+fn index(data: Request) -> impl Responder {
     let res = Response::from(String::from("Loony"));
-    res
-}
-
-fn delete() -> impl Responder {
-    let res = Response::from(32);
     res
 }
 
@@ -44,14 +39,16 @@ struct AppState {
     name: String,
 }
 
-fn main() {
+
+#[async_std::main]
+async fn main() {
     HttpServer::new(move ||
         App::new()
         .app_data( AppState {
             name: "Loony".to_owned(),
         })
         .configure(routes)
-        .route(web::get("/", controller::get_user))
+        // .route(web::get("/", index))
     )
     .run();
 }   
