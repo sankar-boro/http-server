@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 mod app;
 mod responder;
 mod server;
@@ -6,11 +8,11 @@ mod route;
 mod controller;
 mod extensions;
 mod web;
+mod extract;
 
 use service::ServiceConfig;
 use app::App;
 use loony_http::Response;
-use responder::Responder;
 use server::HttpServer;
 
 pub struct Request;
@@ -18,19 +20,13 @@ struct User {
     name: String,
 }
 
-fn index(data: Request) -> impl Responder {
-    let res = Response::from(String::from("Loony"));
-    res
+async fn index() -> Response {
+    Response::ok("Hello World".to_string())
 }
 
 fn routes(config: &mut ServiceConfig) {
     config.service(
-        route::scope("/user")
-        .route(
-            web::get("/get", controller::get_user)
-        ).route(
-            web::get("/delete", controller::delete_user)
-        )
+        route::scope("/user").route(("/get", controller::get_user)).route(("/delete", controller::delete_user))
     );
 }
 
@@ -48,7 +44,7 @@ async fn main() {
             name: "Loony".to_owned(),
         })
         .configure(routes)
-        // .route(web::get("/", index))
+        .route(web::get("/", index))
     )
     .run();
 }   

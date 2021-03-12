@@ -1,13 +1,9 @@
-// use responder::Responder;
-// use loony_http::Response;
+use loony_http::Response;
 
-use crate::responder;
-use crate::Request;
-
-pub async fn get_user(request: Request) -> String {
-    String::from("Get user")
+pub async fn get_user() -> Response {
+    Response::ok("Get User".to_string())
 }
 
-pub async fn delete_user(request: Request) -> String {
-    String::from("User Deleted")
+pub async fn delete_user() -> Response {
+    Response::err("User Deleted".to_string())
 }

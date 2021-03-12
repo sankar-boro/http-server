@@ -1,14 +1,16 @@
+#![allow(dead_code)]
+
 use futures::Future;
 
 use crate::service::{HttpServiceFactoryWrapper, ServiceConfig, ServiceConfigFactory};
 use crate::service::{HttpServiceFactory, Factory};
 use super::AppState;
 use crate::extensions::Extensions;
+use crate::responder::Responder;
 
 pub trait Builder {
     type Product;
 }
-// #[derive(Debug)]
 pub struct App {
     app_data:AppState,
     pub extensions: Extensions,
@@ -16,7 +18,6 @@ pub struct App {
     pub config: Box<dyn ServiceConfigFactory>,
 }
 
-// #[derive(Debug)]
 impl App {
     pub fn new() -> Self {
         Self {
@@ -34,12 +35,22 @@ impl App {
         self
     }
 
-    pub fn route<T, I: 'static, R>(mut self, route: (&str, T)) -> Self where T: Factory<I, R> + 'static, R: Future<Output=String>+ 'static {
+    pub fn route<T, R, O: 'static>(mut self, route: (&str, T)) -> Self 
+    where 
+        T: Factory<R, O> + 'static, 
+        R: Future<Output=O>+ 'static, 
+        O: Responder 
+    {
         self.services.push((route.0.to_string(), Box::new(HttpServiceFactoryWrapper::new(route.1))));
         self
     }
 
-    pub fn service<T, I: 'static, R>(mut self, route: &str, factory: T) -> Self where T: Factory<I, R> + 'static, R: Future<Output=String> + 'static {
+    pub fn service<T, P: 'static, R, O: 'static>(mut self, route: &str, factory: T) -> Self 
+    where 
+        T: Factory<R, O> + 'static, 
+        R: Future<Output=O> + 'static, 
+        O: Responder 
+    {
         self.services.push((route.to_string(), Box::new(HttpServiceFactoryWrapper::new(factory))));
         self
     }

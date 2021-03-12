@@ -1,9 +1,9 @@
 use futures::Future;
-use crate::{route::Route, web};
+use crate::{route::Route};
 use crate::responder::Responder;
 use std::marker::PhantomData;
-use crate::Request;
-use async_std::{prelude::FutureExt, task::{self, block_on}};
+use async_std::task;
+
 pub struct ServiceConfig {
   pub routes:Vec<Route>,
 }
@@ -15,9 +15,9 @@ pub trait HttpServiceFactory {
 }
 
 #[derive(Clone)]
-pub(crate) struct HttpServiceFactoryWrapper<T, I, R> {
+pub(crate) struct HttpServiceFactoryWrapper<T, R, O> {
   factory: T,
-  _t: PhantomData<(I, R)>
+  _t: PhantomData<(R, O)>
 }
 
 /**
@@ -44,7 +44,12 @@ impl ServiceConfigFactory for ServiceConfig {
   }
 }
 
-impl<T, I, R> HttpServiceFactoryWrapper<T, I, R> where T: Factory<I, R>, R: Future<Output=String>{
+impl<T, R, O> HttpServiceFactoryWrapper<T, R, O> 
+where 
+  T: Factory<R, O>, 
+  R: Future<Output=O>, 
+  O: Responder
+{
   pub fn new(factory: T) -> Self {
     Self {
       factory,
@@ -53,10 +58,16 @@ impl<T, I, R> HttpServiceFactoryWrapper<T, I, R> where T: Factory<I, R>, R: Futu
   }
 }
 
-impl<T, I, R> HttpServiceFactory for HttpServiceFactoryWrapper<T, I, R> where T: Factory<I, R>, R: Future<Output=String>{
+impl<T, R, O> HttpServiceFactory for HttpServiceFactoryWrapper<T, R, O> 
+where 
+  T: Factory<R, O>, 
+  R: Future<Output=O>, 
+  O: Responder 
+{
   fn service_call(&self) -> String {
     let factory = &self.factory;
-    task::block_on(factory.call()) 
+    let f_res = task::block_on(factory.call());
+    f_res.respond()
   }
 }
 
@@ -66,15 +77,26 @@ impl<T, I, R> HttpServiceFactory for HttpServiceFactoryWrapper<T, I, R> where T:
   This is totally something else
   ......................................
 */
-pub trait Factory<T, R>
+// P = Parameters
+// R = Returned Response
+// O = Future Output type
+pub trait Factory<R, O>: Clone + 'static
 where
-  R: Future<Output = String>
+  // P: FromRequest,
+  R: Future<Output=O>,
+  O: Responder,
 {
   fn call(&self) -> R;
 }
 
-impl<T, R> Factory<T, R> for T where T: Fn(Request) -> R, R: Future<Output=String>{
+impl<T, R, O> Factory<R, O> for T 
+where 
+  T: Fn() -> R + Clone + 'static, 
+  // P: FromRequest, 
+  R: Future<Output=O>, 
+  O: Responder 
+{
   fn call(&self) -> R {
-    (self)(Request{})
+    (self)()
   }
 }

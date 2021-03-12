@@ -10,7 +10,13 @@ pub struct Route {
 }
 
 impl<'route> Route {
-    pub fn route<T, I: 'static, R>(mut self, route: (&'route str, T)) -> Self where T: Factory<I, R> + 'static, R: Future<Output=String> + 'static {
+    pub fn route<T, R, O: 'static>(mut self, route: (&'route str, T)) -> Self 
+    where 
+        T: Factory<R, O>, 
+        // P: FromRequest,
+        R: Future<Output=O> + 'static, 
+        O: Responder, 
+    {
         self.name.push((route.0.to_string(), Box::new(HttpServiceFactoryWrapper::new(route.1))));
         self
     }
