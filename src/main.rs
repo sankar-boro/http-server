@@ -15,12 +15,19 @@ use app::App;
 use loony_http::Response;
 use server::HttpServer;
 
-pub struct Request;
+#[derive(Debug)]
+pub struct Request {
+    method: String,
+    version: String,
+    url: String,
+}
+
 struct User {
     name: String,
 }
 
-async fn index() -> Response {
+async fn index(request: Request) -> Response {
+    println!("{:?}", request);
     Response::ok("Hello World".to_string())
 }
 

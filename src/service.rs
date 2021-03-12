@@ -3,6 +3,7 @@ use crate::{route::Route};
 use crate::responder::Responder;
 use std::marker::PhantomData;
 use async_std::task;
+use crate::Request;
 
 pub struct ServiceConfig {
   pub routes:Vec<Route>,
@@ -91,12 +92,16 @@ where
 
 impl<T, R, O> Factory<R, O> for T 
 where 
-  T: Fn() -> R + Clone + 'static, 
+  T: Fn(Request) -> R + Clone + 'static, 
   // P: FromRequest, 
   R: Future<Output=O>, 
   O: Responder 
 {
   fn call(&self) -> R {
-    (self)()
+    (self)(Request{
+      method: String::from("GET"),
+      version: String::from("http/1.1"),
+      url: String::from("/get"),
+    })
   }
 }
