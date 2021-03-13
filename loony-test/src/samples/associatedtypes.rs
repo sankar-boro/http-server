@@ -11,5 +11,10 @@ fn main() {
         }),
     };
 
-    let d = (user.describe)();
+    // Short cut
+    // let user_name = (user.describe)();
+    
+    // Long Cut
+    // let user = user.describe;
+    // let user_name = user();
 }
