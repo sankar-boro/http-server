@@ -17,7 +17,8 @@ impl<'route> Route {
         R: Future<Output=O> + 'static, 
         O: Responder, 
     {
-        self.name.push((route.0.to_string(), Box::new(HttpServiceFactoryWrapper::new(route.1))));
+        let s = Box::new(HttpServiceFactoryWrapper::new(route.1));
+        self.name.push((route.0.to_string(), s));
         self
     }
 

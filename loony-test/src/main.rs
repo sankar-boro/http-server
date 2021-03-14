@@ -6,7 +6,11 @@ trait Service {
     type Response;
     fn do_something(&self, p: Self::Request) -> Self::Response;
 }
-trait Factory<P, R>: Service {
+trait Factory<P, R> 
+where 
+    P: Display,
+    R: Display 
+{
     fn call(&self, param: P) -> R;
 }
 
@@ -15,7 +19,12 @@ struct FactoryWrapper<T, P, R> {
     _t: PhantomData<(P, R)>
 }
 
-impl<T, P, R> FactoryWrapper<T, P, R> {
+impl<T, P, R> FactoryWrapper<T, P, R>  
+where 
+    T: Factory<P, R>,
+    P: Display,
+    R: Display,
+{
     fn new(factory: T) -> Self {
         Self {
             factory,
@@ -24,28 +33,41 @@ impl<T, P, R> FactoryWrapper<T, P, R> {
     }
 }
 
-impl<T, P, R> Service for FactoryWrapper<T, P, R> where T: Factory<P, R> {
+impl<T, P, R> Service for FactoryWrapper<T, P, R> 
+where 
+    T: Factory<P, R>,
+    P: Display,
+    R: Display,
+{
     type Request = P;
-    type Response = R;
-
-    fn do_something(&self, p: P) -> R {
-        let factory = &self.factory;
-        factory.call(p)
-    }
-}
-
-trait Display {}
-impl Display for String {}
-
-impl<T> Service for T where T: Fn(String) -> String {
-    type Request = String;
     type Response = String;
+
     fn do_something(&self, p: Self::Request) -> Self::Response {
-        (self).call(p)
+        let factory = &self.factory;
+        let x = factory.call(p);
+        x.display()
     }
 }
 
-impl<T: Service, P, R> Factory<P, R> for T where T: Fn(P) -> R {
+trait Display {
+    fn display(self) -> String;
+}
+
+impl Display for String {
+    fn display(self) -> String {
+        self
+    }
+}
+
+// impl<T> Service for T where T: Fn(String) -> String {
+//     type Request = String;
+//     type Response = String;
+//     fn do_something(&self, p: Self::Request) -> Self::Response {
+//         (self).call(p)
+//     }
+// }
+
+impl<T, P, R> Factory<P, R> for T where T: Fn(P) -> R, R: Display, P: Display {
     fn call(&self, param: P) -> R {
         (self)(param)
     }
@@ -76,12 +98,47 @@ struct Routes {
     routes: Vec<RouteData>,
 }
 
+trait ExtractService {}
+struct Extract<T: Display, S: Service> {
+    service: S,
+    _t: PhantomData<T>,
+}
+
+impl<T: Display, S: Service> Extract<T, S> {
+    pub fn new(service: S) -> Self {
+        Extract {
+            service,
+            _t: PhantomData,
+        }
+    }
+}
+
+impl<T, S> ExtractService for Extract<T, S> 
+where 
+    T: Display,
+    S: Service,
+{
+
+}
+
 fn run<T, P, R>(factory: T, routes: &mut Routes) -> &mut Routes
 where 
     T: Factory<P, R> + 'static, 
     P: Display + 'static, 
     R: Display + 'static, 
 {
+
+    // ----------------------------------------------------------
+    // let name = "".to_string();
+    let x = FactoryWrapper::new(|name: String| {
+        "Hello Bro".to_string()
+    });
+    // let y = Extract::new(x);
+    // let result = FactoryWrapper::new(factory);
+    // let result = Box::new(FactoryWrapper::new(factory));
+    routes.routes.push(Box::new(x));
+    // ----------------------------------------------------------
+    
     // routes.routes.push(Box::new(FactoryWrapper::new(factory)));
     routes
 }
