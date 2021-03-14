@@ -1,4 +1,5 @@
 use std::fmt::Write as FmtWrite;
+use std::marker::PhantomData;
 
 trait Service {
     type Request; 
@@ -7,6 +8,30 @@ trait Service {
 }
 trait Factory<P, R>: Service {
     fn call(&self, param: P) -> R;
+}
+
+struct FactoryWrapper<T, P, R> {
+    factory: T,
+    _t: PhantomData<(P, R)>
+}
+
+impl<T, P, R> FactoryWrapper<T, P, R> {
+    fn new(factory: T) -> Self {
+        Self {
+            factory,
+            _t: PhantomData,
+        }
+    }
+}
+
+impl<T, P, R> Service for FactoryWrapper<T, P, R> where T: Factory<P, R> {
+    type Request = P;
+    type Response = R;
+
+    fn do_something(&self, p: P) -> R {
+        let factory = &self.factory;
+        factory.call(p)
+    }
 }
 
 trait Display {}
@@ -40,24 +65,24 @@ fn home(param: String) -> String {
 
 fn profile(param: String) -> String {
     let mut x = String::new();
-    writeln!(&mut x, "{}, You are at profile page", param).unwrap();
+    writeln!(&mut x, "{}, You are Profile page", param).unwrap();
     x
 }
 
 type RouteData = Box<
-    dyn Service<Request=String, Response=String>,
+    dyn Service<Request = String, Response = String>,
 >;
 struct Routes {
     routes: Vec<RouteData>,
 }
 
-fn run<T: Service<Request=String, Response=String>, P, R>(factory: T, routes: &mut Routes) -> &mut Routes
+fn run<T, P, R>(factory: T, routes: &mut Routes) -> &mut Routes
 where 
     T: Factory<P, R> + 'static, 
-    P: Display, 
-    R: Display 
+    P: Display + 'static, 
+    R: Display + 'static, 
 {
-    routes.routes.push(Box::new(factory));
+    // routes.routes.push(Box::new(FactoryWrapper::new(factory)));
     routes
 }
 
