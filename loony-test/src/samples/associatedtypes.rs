@@ -1,4 +1,6 @@
-type FnArg = Box<dyn Fn() -> String>;
+trait Describe{}
+
+type FnArg = Box<dyn Fn() -> Describe>;
 
 struct User {
     describe: FnArg,
