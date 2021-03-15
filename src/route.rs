@@ -2,23 +2,26 @@ use futures::Future;
 
 use crate::{responder::Responder, service::{HttpServiceFactory, HttpServiceFactoryWrapper}};
 use crate::service::{Factory};
+use crate::web::{FormData, FormDataExtractor};
+use loony_http::Response;
 
 // #[derive(Debug)]
 pub struct Route {
-    pub name: Vec<(String, Box<dyn HttpServiceFactory>)>,
+    pub name: Vec<(String, Box<dyn HttpServiceFactory<Request=FormData, Response=dyn Future<Output=Response>>>)>,
     pub scope: String,
 }
 
 impl<'route> Route {
-    pub fn route<T, R, O: 'static>(mut self, route: (&'route str, T)) -> Self 
+    pub fn route<T, P, R, O: 'static>(mut self, scope: &'route str, factory: T) -> Self 
     where 
-        T: Factory<R, O>, 
-        // P: FromRequest,
+        T: Factory<P, R, O>, 
+        P: FormDataExtractor + 'static,
         R: Future<Output=O> + 'static, 
         O: Responder, 
     {
-        let s = Box::new(HttpServiceFactoryWrapper::new(route.1));
-        self.name.push((route.0.to_string(), s));
+        let s = Box::new(HttpServiceFactoryWrapper::new(|param: FormData| async {
+            Response::ok(String::from("Hello"))
+        }));
         self
     }
 

@@ -22,18 +22,14 @@ pub struct Request {
     url: String,
 }
 
-struct User {
-    name: String,
-}
-
-async fn index(request: Request) -> Response {
-    println!("{:?}", request);
+async fn index(data: web::FormData) -> Response {
+    // println!("{:?}", request);
     Response::ok("Hello World".to_string())
 }
 
 fn routes(config: &mut ServiceConfig) {
     config.service(
-        route::scope("/user").route(("/get", controller::get_user)).route(("/delete", controller::delete_user))
+        route::scope("/user").route("/get", controller::get_user).route("/delete", controller::delete_user)
     );
 }
 

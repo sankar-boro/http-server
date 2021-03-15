@@ -7,6 +7,8 @@ use crate::service::{HttpServiceFactory, Factory};
 use super::AppState;
 use crate::extensions::Extensions;
 use crate::responder::Responder;
+// use crate::extract::FromRequest;
+use crate::web::{FormDataExtractor, FormData};
 
 pub trait Builder {
     type Product;
@@ -14,7 +16,7 @@ pub trait Builder {
 pub struct App {
     app_data:AppState,
     pub extensions: Extensions,
-    pub services: Vec<(String ,Box<dyn HttpServiceFactory>)>,
+    pub services: Vec<(String ,Box<dyn HttpServiceFactory<Request=FormData, Response=String>>)>,
     pub config: Box<dyn ServiceConfigFactory>,
 }
 
@@ -35,23 +37,25 @@ impl App {
         self
     }
 
-    pub fn route<T, R, O: 'static>(mut self, route: (&str, T)) -> Self 
+    pub fn route<T, P, R, O: 'static>(mut self, route: (&str, T)) -> Self 
     where 
-        T: Factory<R, O> + 'static, 
+        T: Factory<P, R, O> + 'static, 
+        P: FormDataExtractor + 'static, 
         R: Future<Output=O>+ 'static, 
         O: Responder 
     {
-        self.services.push((route.0.to_string(), Box::new(HttpServiceFactoryWrapper::new(route.1))));
+        // self.services.push((route.0.to_string(), Box::new(HttpServiceFactoryWrapper::new(route.1))));
         self
     }
 
     pub fn service<T, P: 'static, R, O: 'static>(mut self, route: &str, factory: T) -> Self 
     where 
-        T: Factory<R, O> + 'static, 
+        T: Factory<P, R, O> + 'static, 
+        P: FormDataExtractor + 'static, 
         R: Future<Output=O> + 'static, 
         O: Responder 
     {
-        self.services.push((route.to_string(), Box::new(HttpServiceFactoryWrapper::new(factory))));
+        // self.services.push((route.to_string(), Box::new(HttpServiceFactoryWrapper::new(factory))));
         self
     }
 
