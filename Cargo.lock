@@ -915,8 +915,10 @@ dependencies = [
 name = "loony-test"
 version = "0.1.0"
 dependencies = [
+ "async-std",
  "cargo-expand",
  "futures",
+ "loony-http",
  "loony-macro",
 ]
 

@@ -9,4 +9,9 @@ edition = "2018"
 [dependencies]
 futures = "0.3"
 loony-macro = {path="../loony-macro"}
+loony-http = {path="../loony-http"}
 cargo-expand = "1.0.4"
+
+[dependencies.async-std]
+version = "1.7.0"
+features = ["attributes"]
