@@ -41,6 +41,7 @@ where
   Res: Responder
 {
   fn factory_call(&self, param: String) -> Res {
+    println!("Factory called");
     (self)(param)
   }
 }
@@ -69,5 +70,5 @@ fn main() {
   let r = route.route;
   let n = r.new_service();
   let t = n.call("Sankar boro".to_owned());
-  println!("{}", t);
+  println!("Last: {}", t);
 }

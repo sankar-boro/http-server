@@ -133,9 +133,12 @@ where
   type Request = (Arg, String);
   type Response = String;
   
-  fn call(&self, _t: Self::Request) -> Self::Response {
-    let service = &self.service;
-    let t = service.factory_call(_t.0);
+  fn call(&self, (param, req): Self::Request) -> Self::Response {
+    let t = self.service.factory_call(param);
+    // println!("T1, {}", param);
+    // println!("T2, {}", request);
+    // let service = &self.service;
+    // let t = service.factory_call(_t.0);
     t.respond()
   }
 }
@@ -151,6 +154,10 @@ where
     type Response = String;
 
     fn call(&self, req: Self::Request) -> Self::Response {
+      println!("ExtractService: {}", req);
+      let service = &self.service;
+      // let t = T::callme(req);
+      // let t = service.call(req);
       req
     }
 }
@@ -185,17 +192,18 @@ where
     type Response = String;
 
     fn call(&self, req: Self::Request) -> Self::Response {
-      req
+      let a = &self.service;
+      let b = a.call(req);
+      b
     }
 }
 
 impl Service for BoxedRouteService {
     type Request = String;
-
     type Response = String;
 
     fn call(&self, param: Self::Request) -> Self::Response {
-      param
+      (**self).call(param.clone())
     }
 }
 
