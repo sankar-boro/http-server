@@ -1,6 +1,5 @@
 use std::marker::PhantomData;
 use crate::{FromRequest, Factory, Responder};
-use std::task::{Context};
 
 pub type BoxedRouteService = Box<
     dyn Service<
@@ -27,9 +26,9 @@ pub trait Service {
 pub trait ServiceFactory {
   type Request;
   type Response;
-  type Service;
+  type Service: Service<Request=Self::Request, Response=Self::Response>;
 
-  fn new_service(&self);
+  fn new_service(&self) -> Self::Service;
 }
 
 // Structs
@@ -51,6 +50,9 @@ pub struct ExtractService<T: FromRequest, S> {
     service: S,
     _t: PhantomData<T>,
 }
+struct RouteServiceWrapper<T: Service> {
+    service: T,
+}
 
 pub struct RouteNewService<T>
 where
@@ -68,6 +70,19 @@ where
 
 
 // Struct Implementation
+
+impl<T, Arg, Res> Clone for Wrapper<T, Arg, Res>
+where
+  T: Factory<Arg, Res>,
+  Res: Responder,
+{
+    fn clone(&self) -> Self {
+      Self {
+        service: self.service.clone(),
+        _t: PhantomData,
+      }
+    }
+}
 
 impl<T, Arg, Res> Wrapper<T, Arg, Res> 
 where 
@@ -125,21 +140,65 @@ where
   }
 }
 
+impl<T: FromRequest, S> Service for ExtractService<T, S>
+where
+    S: Service<
+            Request = (T, String),
+            Response = String,
+        > + Clone,
+{
+    type Request = String;
+    type Response = String;
+
+    fn call(&self, req: Self::Request) -> Self::Response {
+      req
+    }
+}
+
 
 impl<T: FromRequest, S> ServiceFactory for Extract<T, S> 
 where S: Service<
           Request = (T, String),
           Response = String,
-        >
+        > + Clone,
 {
     type Request = String;
     type Response = String;
     type Service = ExtractService<T, S>;
 
-    fn new_service(&self) {
-        todo!()
+    fn new_service(&self) -> Self::Service {
+      ExtractService {
+        service: self.service.clone(),
+        _t: PhantomData,
+      }
     }
 }
+
+impl<T> Service for RouteServiceWrapper<T>
+where
+    T: Service<
+        Request = String,
+        Response = String,
+    >,
+{
+    type Request = String;
+    type Response = String;
+
+    fn call(&self, req: Self::Request) -> Self::Response {
+      req
+    }
+}
+
+impl Service for BoxedRouteService {
+    type Request = String;
+
+    type Response = String;
+
+    fn call(&self, param: Self::Request) -> Self::Response {
+      param
+    }
+}
+
 
 impl<T> ServiceFactory for RouteNewService<T> 
 where 
@@ -147,7 +206,7 @@ where
     Request=String,
     Response=String,
   >,
-  T::Service: 'static,
+  T::Service: Service + 'static,
 {
     type Request = String;
 
@@ -155,7 +214,12 @@ where
 
     type Service = BoxedRouteService;
 
-    fn new_service(&self) {
-        todo!()
+    fn new_service(&self) -> Self::Service {
+      let s = &self.service;
+      let service = s.new_service();
+      let d = Box::new(RouteServiceWrapper {
+        service,
+      });
+      d
     }
 }
