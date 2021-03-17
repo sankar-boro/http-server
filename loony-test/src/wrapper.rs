@@ -1,5 +1,6 @@
 use std::marker::PhantomData;
 use crate::{FromRequest, Factory, Responder};
+use std::task::{Context};
 
 pub type BoxedRouteService = Box<
     dyn Service<
@@ -50,6 +51,7 @@ pub struct ExtractService<T: FromRequest, S> {
     service: S,
     _t: PhantomData<T>,
 }
+
 struct RouteServiceWrapper<T: Service> {
     service: T,
 }
@@ -134,11 +136,8 @@ where
   type Response = String;
   
   fn call(&self, (param, req): Self::Request) -> Self::Response {
+    print!("Wrapper");
     let t = self.service.factory_call(param);
-    // println!("T1, {}", param);
-    // println!("T2, {}", request);
-    // let service = &self.service;
-    // let t = service.factory_call(_t.0);
     t.respond()
   }
 }
@@ -154,11 +153,9 @@ where
     type Response = String;
 
     fn call(&self, req: Self::Request) -> Self::Response {
-      println!("ExtractService: {}", req);
-      let service = &self.service;
-      // let t = T::callme(req);
-      // let t = service.call(req);
-      req
+      let t = T::from_request(req.clone());
+      let b = self.service.call((t, req));
+      b
     }
 }
 

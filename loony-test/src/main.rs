@@ -11,7 +11,7 @@ pub trait Responder {
   fn respond(self) -> String;
 }
 pub trait FromRequest{
-  fn callme(self) -> Self;
+  fn from_request(req: String) -> Self;
 }
 // *************************************************
 
@@ -27,8 +27,8 @@ impl Responder for String {
 }
 
 impl FromRequest for String {
-  fn callme(self) -> Self {
-      self
+  fn from_request(req: String) -> Self {
+    req
   }
 }
 pub trait Factory<Arg, Res>: Clone + 'static {
@@ -48,7 +48,7 @@ where
 
 fn index(param: String) -> impl Responder {
   let mut buf = String::new();
-  writer(&mut buf, "Hello").unwrap();
+  writer(&mut buf, "Hello World! ").unwrap();
   writer(&mut buf, &param).unwrap();
   buf
 }
@@ -69,6 +69,6 @@ fn main() {
   let route = run(index);
   let r = route.route;
   let n = r.new_service();
-  let t = n.call("Sankar boro".to_owned());
-  println!("Last: {}", t);
+  let final_res = n.call("This is Sankar".to_owned());
+  print!("{}", final_res);
 }
