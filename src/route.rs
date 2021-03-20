@@ -1,27 +1,37 @@
-use futures::Future;
+use crate::{responder::Responder, service::{Service, ServiceFactory}};
+use crate::service::{Factory, RouteNewService, Extract, Wrapper};
+use crate::FromRequest;
 
-use crate::{responder::Responder, service::{HttpServiceFactory, HttpServiceFactoryWrapper}};
-use crate::service::{Factory};
-use crate::web::{FormData, FormDataExtractor};
-use loony_http::Response;
+pub type BoxedRouteService = Box<
+    dyn Service<
+        Request = String,
+        Response = String,
+    >,
+>;
 
-// #[derive(Debug)]
+pub type BoxedRouteNewService = Box<
+    dyn ServiceFactory<
+        Request = String,
+        Response = String,
+        Service = BoxedRouteService,
+    >,
+>;
 pub struct Route {
-    pub name: Vec<(String, Box<dyn HttpServiceFactory<Request=FormData, Response=dyn Future<Output=Response>>>)>,
+    pub name: Vec<(String, BoxedRouteNewService)>,
     pub scope: String,
 }
 
 impl<'route> Route {
-    pub fn route<T, P, R, O: 'static>(mut self, scope: &'route str, factory: T) -> Self 
+    pub fn route<T, P, R>(mut self, scope: &'route str, factory: T) -> Self 
     where 
-        T: Factory<P, R, O>, 
-        P: FormDataExtractor + 'static,
-        R: Future<Output=O> + 'static, 
-        O: Responder, 
+        T: Factory<P, R> + Clone + 'static, 
+        P: FromRequest + 'static,
+        // R: Future<Output=O> + 'static, 
+        R: Responder + 'static, 
     {
-        let s = Box::new(HttpServiceFactoryWrapper::new(|param: FormData| async {
-            Response::ok(String::from("Hello"))
-        }));
+        
+        let route = Box::new(RouteNewService::new(Extract::new(Wrapper::new(factory))));
+        self.name.push((scope.to_owned(), route));
         self
     }
 
@@ -49,11 +59,4 @@ pub fn scope(scope: &str) -> Route {
 
 pub fn get<T>(route: &str, get:T) -> (&str, T) where T: Fn() {
     (route, get)
-}
-
-    // pub fn route<T>(mut self, route: &str, factory: T) -> Self where T: HttpServiceFactory + 'static {
-#[derive(Debug)]
-pub struct RouteService<T> where T: HttpServiceFactory + 'static {
-    route: String,
-    serve: T
 }

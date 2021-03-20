@@ -1,35 +1,12 @@
-use futures::Future;
-use crate::{route::Route};
-use crate::responder::Responder;
 use std::marker::PhantomData;
-// use async_std::task;
-// use crate::Request;
-// use crate::extract::FromRequest;
-use crate::web::FormDataExtractor;
+use crate::route::{BoxedRouteService};
+use crate::route::Route;
+use crate::responder::Responder;
+use crate::FromRequest;
 
 pub struct ServiceConfig {
   pub routes:Vec<Route>,
 }
-pub trait ServiceConfigFactory {
-  fn get_routes(&self) -> &Vec<Route>;
-}
-pub trait HttpServiceFactory {
-  type Request;
-  type Response;
-  fn service_call(&self, param: Self::Request) -> Self::Response;
-}
-
-#[derive(Clone)]
-pub(crate) struct HttpServiceFactoryWrapper<T, P, R, O> {
-  factory: T,
-  _t: PhantomData<(P, R, O)>
-}
-
-/**
-  ......................................
-  Implementations
-  ......................................
-*/
 
 impl ServiceConfig {
   pub fn new() -> Self {
@@ -43,103 +20,238 @@ impl ServiceConfig {
   }
 }
 
+pub trait ServiceConfigFactory {
+  fn get_routes(&self) -> &Vec<Route>;
+}
+
 impl ServiceConfigFactory for ServiceConfig {
   fn get_routes(&self) -> &Vec<Route> {
     &self.routes
   }
 }
 
-impl<T, P, R, O> HttpServiceFactoryWrapper<T, P, R, O> 
-where 
-  T: Factory<P, R, O>, 
-  P: FormDataExtractor,
-  R: Future<Output=O>, 
-  O: Responder
-{
-  pub fn new(factory: T) -> Self {
-    Self {
-      factory,
-      _t: PhantomData
-    }
-  }
+pub trait Service {
+  type Request;
+  type Response;
+
+  fn call(&self, param: Self::Request) -> Self::Response;
 }
 
-impl<T, P, R, O> HttpServiceFactory for HttpServiceFactoryWrapper<T, P, R, O> 
-where 
-  T: Factory<P, R, O>, 
-  P: FormDataExtractor,
-  R: Future<Output=O>, 
-  O: Responder 
-{
-  type Request = P;
-  type Response = R;
+pub trait ServiceFactory {
+  type Request;
+  type Response;
+  type Service: Service<Request=Self::Request, Response=Self::Response>;
 
-  fn service_call(&self, param: Self::Request) -> Self::Response {
-    let factory = &self.factory;
-    factory.call(param)
-  }
+  fn new_service(&self) -> Self::Service;
 }
 
 
-/**
-  ......................................
-  This is totally something else
-  ......................................
-*/
-// P = Parameters
-// R = Returned Response
-// O = Future Output type
-pub trait Factory<P, R, O>: Clone + 'static
+pub trait Factory<Arg, Res>: Clone + 'static {
+  fn factory_call(&self, param: Arg) -> Res;
+}
+
+impl<T, String, Res> Factory<String, Res> for T 
+where 
+  T: Fn(String) -> Res + Clone + 'static, 
+  Res: Responder
+{
+  fn factory_call(&self, param: String) -> Res {
+    (self)(param)
+  }
+}
+
+// Structs
+pub struct Wrapper<T, Arg, Res> 
+where 
+  T: Factory<Arg, Res>,
+  Res: Responder,
+{
+  service: T,
+  _t: PhantomData<(Arg, Res)>
+}
+
+pub struct Extract<T: FromRequest, S> {
+  service: S,
+  _t: PhantomData<T>
+}
+
+pub struct ExtractService<T: FromRequest, S> {
+    service: S,
+    _t: PhantomData<T>,
+}
+
+struct RouteServiceWrapper<T: Service> {
+    service: T,
+}
+
+pub struct RouteNewService<T>
 where
-  // P: FromRequest,
-  R: Future<Output=O>,
-  O: Responder,
+  T: ServiceFactory<
+    Request=String
+  >,
+  T::Service: 'static,
 {
-  fn call(&self, p: P) -> R;
+  service: T,
+}
+/**
+* Implementations
+*
+*/
+
+
+// Struct Implementation
+
+impl<T, Arg, Res> Clone for Wrapper<T, Arg, Res>
+where
+  T: Factory<Arg, Res>,
+  Res: Responder,
+{
+    fn clone(&self) -> Self {
+      Self {
+        service: self.service.clone(),
+        _t: PhantomData,
+      }
+    }
 }
 
-impl<T, P, R, O> Factory<P, R, O> for T 
+impl<T, Arg, Res> Wrapper<T, Arg, Res> 
 where 
-  T: Fn(P) -> R + Clone + 'static, 
-  // P: FromRequest, 
-  R: Future<Output=O>, 
-  O: Responder 
-{
-  fn call(&self, p: P) -> R {
-    // (self)(Request{
-    //   method: String::from("GET"),
-    //   version: String::from("http/1.1"),
-    //   url: String::from("/get"),
-    // })
-    (self)(p)
+  T: Factory<Arg, Res>,
+  Res: Responder,
+  {
+    // service: Fn(Arg) -> Res
+    pub fn new(service: T) -> Self {
+      Self {
+        service,
+        _t: PhantomData,
+      }  
   }
 }
 
-/// FromRequest trait impl for tuples
-macro_rules! factory_tuple ({ $(($n:tt, $T:ident)),+} => {
-    impl<Func, $($T,)+ Res, O> Factory<($($T,)+), Res, O> for Func
-    where Func: Fn($($T,)+) -> Res + Clone + 'static,
-          Res: Future<Output=O>, 
-          O: Responder 
-    {
-        fn call(&self, param: ($($T,)+)) -> Res {
-            (self)($(param.$n,)+)
-        }
+impl<T: FromRequest, S> Extract<T, S> {
+  pub fn new(service: S) -> Self {
+    Self {
+      service,
+      _t: PhantomData,
     }
-});
+  }  
+}
 
-#[rustfmt::skip]
-mod m {
-    use super::*;
+impl<T> RouteNewService<T>
+where
+  T: ServiceFactory<
+    Request=String,
+    Response=String,
+  >,
+  T::Service: 'static,
+{
+  pub fn new(service: T) -> Self {
+    Self {
+      service,
+    }
+  } 
+}
 
-  // factory_tuple!((0, FormDataExtractor));
-  // factory_tuple!((0, FormDataExtractor), (1, String));
-  // factory_tuple!((0, A), (1, B), (2, C));
-  // factory_tuple!((0, A), (1, B), (2, C), (3, D));
-  // factory_tuple!((0, A), (1, B), (2, C), (3, D), (4, E));
-  // factory_tuple!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F));
-  // factory_tuple!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G));
-  // factory_tuple!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G), (7, H));
-  // factory_tuple!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G), (7, H), (8, I));
-  // factory_tuple!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G), (7, H), (8, I), (9, J));
+
+// Trait Implementation
+
+impl<T, Arg, Res> Service for Wrapper<T, Arg, Res> 
+where 
+  T: Factory<Arg, Res>,
+  Res: Responder,
+{
+  type Request = (Arg, String);
+  type Response = String;
+  
+  fn call(&self, (param, _): Self::Request) -> Self::Response {
+    let t = self.service.factory_call(param);
+    t.respond()
+  }
+}
+
+impl<T: FromRequest, S> Service for ExtractService<T, S>
+where
+    S: Service<
+            Request = (T, String),
+            Response = String,
+        > + Clone,
+{
+    type Request = String;
+    type Response = String;
+
+    fn call(&self, req: Self::Request) -> Self::Response {
+      let t = T::from_request(req.clone());
+      let b = self.service.call((t, req));
+      b
+    }
+}
+
+
+impl<T: FromRequest, S> ServiceFactory for Extract<T, S> 
+where S: Service<
+          Request = (T, String),
+          Response = String,
+        > + Clone,
+{
+    type Request = String;
+    type Response = String;
+    type Service = ExtractService<T, S>;
+
+    fn new_service(&self) -> Self::Service {
+      ExtractService {
+        service: self.service.clone(),
+        _t: PhantomData,
+      }
+    }
+}
+
+impl<T> Service for RouteServiceWrapper<T>
+where
+    T: Service<
+        Request = String,
+        Response = String,
+    >,
+{
+    type Request = String;
+    type Response = String;
+
+    fn call(&self, req: Self::Request) -> Self::Response {
+      let a = &self.service;
+      let b = a.call(req);
+      b
+    }
+}
+
+impl Service for BoxedRouteService {
+    type Request = String;
+    type Response = String;
+
+    fn call(&self, param: Self::Request) -> Self::Response {
+      (**self).call(param.clone())
+    }
+}
+
+
+impl<T> ServiceFactory for RouteNewService<T> 
+where 
+  T: ServiceFactory<
+    Request=String,
+    Response=String,
+  >,
+  T::Service: Service + 'static,
+{
+    type Request = String;
+
+    type Response = String;
+
+    type Service = BoxedRouteService;
+
+    fn new_service(&self) -> Self::Service {
+      let s = &self.service;
+      let service = s.new_service();
+      let d = Box::new(RouteServiceWrapper {
+        service,
+      });
+      d
+    }
 }

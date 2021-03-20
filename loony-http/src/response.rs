@@ -1,5 +1,3 @@
-use std::convert::From;
-
 pub enum Response {
     Ok(Option<String>),
     Err(Option<String>),

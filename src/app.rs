@@ -1,22 +1,35 @@
 #![allow(dead_code)]
 
-use futures::Future;
-
-use crate::service::{HttpServiceFactoryWrapper, ServiceConfig, ServiceConfigFactory};
-use crate::service::{HttpServiceFactory, Factory};
+use crate::service::{Extract, RouteNewService, ServiceConfig, Wrapper};
+use crate::service::{Factory};
 use super::AppState;
 use crate::extensions::Extensions;
 use crate::responder::Responder;
-// use crate::extract::FromRequest;
-use crate::web::{FormDataExtractor, FormData};
+use crate::service::{Service, ServiceFactory, ServiceConfigFactory};
+use crate::FromRequest;
 
 pub trait Builder {
     type Product;
 }
+
+pub type BoxedRouteService = Box<
+    dyn Service<
+        Request = String,
+        Response = String,
+    >,
+>;
+
+pub type BoxedRouteNewService = Box<
+    dyn ServiceFactory<
+        Request = String,
+        Response = String,
+        Service = BoxedRouteService,
+    >,
+>;
 pub struct App {
     app_data:AppState,
     pub extensions: Extensions,
-    pub services: Vec<(String ,Box<dyn HttpServiceFactory<Request=FormData, Response=String>>)>,
+    pub services: Vec<(String, BoxedRouteNewService)>,
     pub config: Box<dyn ServiceConfigFactory>,
 }
 
@@ -37,27 +50,28 @@ impl App {
         self
     }
 
-    pub fn route<T, P, R, O: 'static>(mut self, route: (&str, T)) -> Self 
+    pub fn route<T, P, R>(mut self, route: (&str, T)) -> Self 
     where 
-        T: Factory<P, R, O> + 'static, 
-        P: FormDataExtractor + 'static, 
-        R: Future<Output=O>+ 'static, 
-        O: Responder 
+        T: Factory<P, R> + Clone + 'static, 
+        P: FromRequest + 'static, 
+        // R: Future<Output=O>+ 'static, 
+        R: Responder + 'static
     {
-        // self.services.push((route.0.to_string(), Box::new(HttpServiceFactoryWrapper::new(route.1))));
+        let factory = Box::new(RouteNewService::new(Extract::new(Wrapper::new(route.1))));
+        self.services.push((route.0.to_owned(), factory));
         self
     }
 
-    pub fn service<T, P: 'static, R, O: 'static>(mut self, route: &str, factory: T) -> Self 
-    where 
-        T: Factory<P, R, O> + 'static, 
-        P: FormDataExtractor + 'static, 
-        R: Future<Output=O> + 'static, 
-        O: Responder 
-    {
-        // self.services.push((route.to_string(), Box::new(HttpServiceFactoryWrapper::new(factory))));
-        self
-    }
+    // pub fn service<T, P, R>(mut self, route: &str, factory: T) -> Self 
+    // where 
+    //     T: Factory<P, R> + Clone + 'static, 
+    //     P: FromRequest + 'static, 
+    //     // R: Future<Output=O> + 'static, 
+    //     R: Responder
+    // {
+    //     self.services.push((route.to_string(), Box::new(HttpServiceFactoryWrapper::new(factory))));
+    //     self
+    // }
 
     pub fn configure<'a, T>(mut self, cnfg: T) -> Self where T: Fn(&mut ServiceConfig) {
         let mut configs = ServiceConfig::new();

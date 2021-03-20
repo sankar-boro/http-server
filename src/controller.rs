@@ -1,10 +1,19 @@
-use loony_http::Response;
-use crate::web;
+use std::fmt::{Error, Write};
 
-pub async fn get_user(data: web::FormData) -> Response {
-    Response::ok("Get User".to_string())
+fn writer<W: Write>(f: &mut W, s: &str) -> Result<(), Error> {
+    f.write_fmt(format_args!("{}", s))
 }
 
-pub async fn delete_user(data: web::FormData) -> Response {
-    Response::err("User Deleted".to_string())
+pub fn get_user(data: String) -> String {
+    let mut buf = String::new();
+    writer(&mut buf, "GET USER").unwrap();
+    writer(&mut buf, &data).unwrap();
+    buf
+}
+
+pub fn delete_user(data: String) -> String {
+    let mut buf = String::new();
+    writer(&mut buf, "DELETE USER").unwrap();
+    writer(&mut buf, &data).unwrap();
+    buf
 }
