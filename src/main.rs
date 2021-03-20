@@ -26,7 +26,7 @@ fn writer<W: Write>(f: &mut W, s: &str) -> Result<(), Error> {
     f.write_fmt(format_args!("{}", s))
 }
 
-fn index(data: String) -> impl Responder {
+async fn index(data: String) -> impl Responder {
     let mut buf = String::new();
     writer(&mut buf, "Hello World! ").unwrap();
     writer(&mut buf, &data).unwrap();

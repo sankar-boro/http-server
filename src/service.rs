@@ -1,8 +1,20 @@
+use async_std::task; 
+use std::future::Future;
 use std::marker::PhantomData;
-use crate::route::{BoxedRouteService};
+
+use crate::FromRequest;
 use crate::route::Route;
 use crate::responder::Responder;
-use crate::FromRequest;
+use crate::route::{BoxedRouteService};
+
+
+pub trait Factory<Arg, Res, O>: Clone + 'static 
+where 
+  Res: Future<Output=O>, 
+  O: Responder
+{
+  fn factory_call(&self, param: Arg) -> Res;
+}
 
 pub struct ServiceConfig {
   pub routes:Vec<Route>,
@@ -45,15 +57,11 @@ pub trait ServiceFactory {
   fn new_service(&self) -> Self::Service;
 }
 
-
-pub trait Factory<Arg, Res>: Clone + 'static {
-  fn factory_call(&self, param: Arg) -> Res;
-}
-
-impl<T, String, Res> Factory<String, Res> for T 
+impl<T, String, Res, O> Factory<String, Res, O> for T 
 where 
   T: Fn(String) -> Res + Clone + 'static, 
-  Res: Responder
+  Res: Future<Output=O>,
+  O: Responder,
 {
   fn factory_call(&self, param: String) -> Res {
     (self)(param)
@@ -61,13 +69,14 @@ where
 }
 
 // Structs
-pub struct Wrapper<T, Arg, Res> 
+pub struct Wrapper<T, Arg, Res, O> 
 where 
-  T: Factory<Arg, Res>,
-  Res: Responder,
+  T: Factory<Arg, Res, O>,
+  Res: Future<Output=O>,
+  O: Responder,
 {
   service: T,
-  _t: PhantomData<(Arg, Res)>
+  _t: PhantomData<(Arg, Res, O)>
 }
 
 pub struct Extract<T: FromRequest, S> {
@@ -101,10 +110,11 @@ where
 
 // Struct Implementation
 
-impl<T, Arg, Res> Clone for Wrapper<T, Arg, Res>
+impl<T, Arg, Res, O> Clone for Wrapper<T, Arg, Res, O>
 where
-  T: Factory<Arg, Res>,
-  Res: Responder,
+  T: Factory<Arg, Res, O>,
+  Res: Future<Output=O>,
+  O: Responder,
 {
     fn clone(&self) -> Self {
       Self {
@@ -114,10 +124,11 @@ where
     }
 }
 
-impl<T, Arg, Res> Wrapper<T, Arg, Res> 
+impl<T, Arg, Res, O> Wrapper<T, Arg, Res, O> 
 where 
-  T: Factory<Arg, Res>,
-  Res: Responder,
+  T: Factory<Arg, Res, O>,
+  Res: Future<Output=O>,
+  O: Responder,
   {
     // service: Fn(Arg) -> Res
     pub fn new(service: T) -> Self {
@@ -155,17 +166,19 @@ where
 
 // Trait Implementation
 
-impl<T, Arg, Res> Service for Wrapper<T, Arg, Res> 
+impl<T, Arg, Res, O> Service for Wrapper<T, Arg, Res, O> 
 where 
-  T: Factory<Arg, Res>,
-  Res: Responder,
+  T: Factory<Arg, Res, O>,
+  Res: Future<Output=O>,
+  O: Responder,
 {
   type Request = (Arg, String);
   type Response = String;
   
   fn call(&self, (param, _): Self::Request) -> Self::Response {
     let t = self.service.factory_call(param);
-    t.respond()
+    let r = task::block_on(t);
+    r.respond()
   }
 }
 

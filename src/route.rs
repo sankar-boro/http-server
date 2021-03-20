@@ -1,6 +1,8 @@
-use crate::{responder::Responder, service::{Service, ServiceFactory}};
-use crate::service::{Factory, RouteNewService, Extract, Wrapper};
+use std::future::Future;
+
 use crate::FromRequest;
+use crate::service::{Factory, RouteNewService, Extract, Wrapper};
+use crate::{responder::Responder, service::{Service, ServiceFactory}};
 
 pub type BoxedRouteService = Box<
     dyn Service<
@@ -22,12 +24,12 @@ pub struct Route {
 }
 
 impl<'route> Route {
-    pub fn route<T, P, R>(mut self, scope: &'route str, factory: T) -> Self 
+    pub fn route<T, P, R, O>(mut self, scope: &'route str, factory: T) -> Self 
     where 
-        T: Factory<P, R> + Clone + 'static, 
+        T: Factory<P, R, O> + Clone + 'static, 
         P: FromRequest + 'static,
-        // R: Future<Output=O> + 'static, 
-        R: Responder + 'static, 
+        R: Future<Output=O> + 'static, 
+        O: Responder + 'static, 
     {
         
         let route = Box::new(RouteNewService::new(Extract::new(Wrapper::new(factory))));

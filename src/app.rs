@@ -1,12 +1,14 @@
 #![allow(dead_code)]
 
-use crate::service::{Extract, RouteNewService, ServiceConfig, Wrapper};
-use crate::service::{Factory};
+use std::future::Future;
+
 use super::AppState;
-use crate::extensions::Extensions;
-use crate::responder::Responder;
-use crate::service::{Service, ServiceFactory, ServiceConfigFactory};
 use crate::FromRequest;
+use crate::service::{Factory};
+use crate::responder::Responder;
+use crate::extensions::Extensions;
+use crate::service::{Service, ServiceFactory, ServiceConfigFactory};
+use crate::service::{Extract, RouteNewService, ServiceConfig, Wrapper};
 
 pub trait Builder {
     type Product;
@@ -50,12 +52,12 @@ impl App {
         self
     }
 
-    pub fn route<T, P, R>(mut self, route: (&str, T)) -> Self 
+    pub fn route<T, P, R, O>(mut self, route: (&str, T)) -> Self 
     where 
-        T: Factory<P, R> + Clone + 'static, 
+        T: Factory<P, R, O> + Clone + 'static, 
         P: FromRequest + 'static, 
-        // R: Future<Output=O>+ 'static, 
-        R: Responder + 'static
+        R: Future<Output=O>+ 'static, 
+        O: Responder + 'static
     {
         let factory = Box::new(RouteNewService::new(Extract::new(Wrapper::new(route.1))));
         self.services.push((route.0.to_owned(), factory));
