@@ -8,6 +8,7 @@ mod route;
 mod controller;
 mod extensions;
 mod web;
+mod builder;
 
 use service::ServiceConfig;
 use app::App;
@@ -35,7 +36,9 @@ async fn index(data: String) -> impl Responder {
 
 fn routes(config: &mut ServiceConfig) {
     config.service(
-        route::scope("/user").route("/get", controller::get_user).route("/delete", controller::delete_user)
+        route::scope("/user")
+        .route("/get", route::get(controller::get_user))
+        .route("/delete", route::post(controller::delete_user))
     );
 }
 

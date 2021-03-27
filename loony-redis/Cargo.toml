@@ -1,12 +1,11 @@
 [package]
+name = "loony-redis"
+version = "0.1.0"
 authors = ["Sankar boro <sankar.boro@yahoo.com>"]
 edition = "2018"
-name = "loony-server"
-version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-loony-http = {path = "../loony-http"}
-tokio = "1.4.0"
-mio = "0.7.11"
+tokio = { version = "1", features = ["full"] }
+# mini-redis = "0.4"

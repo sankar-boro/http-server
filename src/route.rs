@@ -18,13 +18,17 @@ pub type BoxedRouteNewService = Box<
         Service = BoxedRouteService,
     >,
 >;
+
+type Method = String;
+type RoutePath = String;
 pub struct Route {
-    pub name: Vec<(String, BoxedRouteNewService)>,
+    pub name: Vec<(RoutePath, Method, BoxedRouteNewService)>,
     pub scope: String,
 }
 
+
 impl<'route> Route {
-    pub fn route<T, P, R, O>(mut self, scope: &'route str, factory: T) -> Self 
+    pub fn route<T, P, R, O>(mut self, route_path: &'route str, factory: (&'static str, T)) -> Self 
     where 
         T: Factory<P, R, O> + Clone + 'static, 
         P: FromRequest + 'static,
@@ -32,33 +36,23 @@ impl<'route> Route {
         O: Responder + 'static, 
     {
         
-        let route = Box::new(RouteNewService::new(Extract::new(Wrapper::new(factory))));
-        self.name.push((scope.to_owned(), route));
+        let route = Box::new(RouteNewService::new(Extract::new(Wrapper::new(factory.1))));
+        self.name.push((route_path.to_owned(), factory.0.to_owned(), route));
         self
-    }
-
-    pub fn get_scope(&self) -> &str {   
-        &self.scope
-    }
-
-    pub fn get_scope_routes(&self) -> String {
-        let mut _route = String::from("");
-        // for route in self.name.iter() {
-        //     _route.push_str(" Route name:");
-        //     _route.push_str(&route.0);
-        //     println!("Response: {}", route.1.call());
-        // }
-        _route
     }
 }
 
 pub fn scope(scope: &str) -> Route {
-    Route{
+    Route {
         scope: scope.to_string(),
         name: Vec::new(),
     }
 }
 
-pub fn get<T>(route: &str, get:T) -> (&str, T) where T: Fn() {
-    (route, get)
+pub fn get<T>(f:T) -> (&'static str, T) {
+    ("GET", f)
+}
+
+pub fn post<T>(f:T) -> (&'static str, T) {
+    ("POST", f)
 }
