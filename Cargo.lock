@@ -356,9 +356,9 @@ dependencies = [
 
 [[package]]
 name = "futures-core"
-version = "0.3.8"
+version = "0.3.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "847ce131b72ffb13b6109a221da9ad97a64cbe48feb1028356b836b47b8f1748"
+checksum = "15496a72fabf0e62bdc3df11a59a3787429221dd0710ba8ef163d6f7a9112c94"
 
 [[package]]
 name = "futures-executor"
@@ -670,11 +670,6 @@ dependencies = [
 [[package]]
 name = "loony-server"
 version = "0.1.0"
-dependencies = [
- "loony-http",
- "mio",
- "tokio",
-]
 
 [[package]]
 name = "loony-service"

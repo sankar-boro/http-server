@@ -28,6 +28,7 @@ pub type BoxedRouteNewService = Box<
         Service = BoxedRouteService,
     >,
 >;
+
 pub struct App {
     app_data:AppState,
     pub extensions: Extensions,

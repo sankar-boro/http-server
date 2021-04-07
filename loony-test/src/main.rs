@@ -3,6 +3,7 @@
 mod responder;
 mod request;
 mod extensions;
+mod array_test;
 
 use responder::{HttpResponse, Responder};
 use request::{HttpRequest, Request};

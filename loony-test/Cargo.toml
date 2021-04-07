@@ -13,3 +13,12 @@ fxhash = "0.2.1"
 [dependencies.async-std]
 version = "1.7.0"
 features = ["attributes"]
+
+[[example]]
+name = "array_test"
+path = "src/array_test.rs"
+
+
+[[example]]
+name = "http_parse"
+path = "src/http_parse.rs"

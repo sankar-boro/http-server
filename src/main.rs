@@ -9,6 +9,7 @@ mod controller;
 mod extensions;
 mod web;
 mod builder;
+mod scope;
 
 use service::ServiceConfig;
 use app::App;
@@ -46,8 +47,7 @@ fn routes(config: &mut ServiceConfig) {
 struct AppState {
     name: String,
 }
-
-pub trait FromRequest {
+pub trait FromRequest: Clone {
   fn from_request(data: String) -> Self;
 }
 
