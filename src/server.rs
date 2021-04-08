@@ -21,14 +21,18 @@ impl HttpServer {
         let mut ext = HashMap::new();
         let app = (self.app)();
         let configs = app.config.get_routes().iter();
+        &app.services.iter().for_each(|data| {
+            ext.insert(data.0.clone(), &data.1);
+        });
+
         for scope in configs {
             let mut r = String::from("");
             r.push_str(&scope.scope);
             for route in scope.name.iter() {
                 r.push_str(&route.0);
                 let s = &route.2;
-                ext.insert(r.clone(), s.clone());
-                r = String::from("");
+                ext.insert(r.clone(), s);
+                r.clear();
                 r.push_str(&scope.scope);
             }
         }

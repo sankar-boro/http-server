@@ -9,24 +9,20 @@ version = "0.1.0"
 [workspace]
 members = [
   "loony-http",
-  "loony-server",
+  # "loony-server",
   "loony-test",
   "loony-service",
   "loony-futures", 
   "loony-macro",
-  "loony-help",
-  "loony-redis",
 ]
 
 [dependencies]
 loony-http = {path = "./loony-http"}
-loony-server = {path = "./loony-server"}
+# loony-server = {path = "./loony-server"}
 loony-test = {path = "./loony-test"}
 loony-service = {path = "./loony-service"}
 loony-futures = {path = "./loony-futures"}
 loony-macro = {path = "./loony-macro"}
-loony-help = {path = "./loony-help"}
-loony-redis = {path = "./loony-redis"}
 fxhash = "0.2.1"
 http = "0.2.1"
 futures = "0.3.8"

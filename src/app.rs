@@ -60,7 +60,10 @@ impl App {
         R: Future<Output=O>+ 'static, 
         O: Responder + 'static
     {
-        let factory = Box::new(RouteNewService::new(Extract::new(Wrapper::new(route.1))));
+        let wrapper = Wrapper::new(route.1);
+        let extract = Extract::new(wrapper);
+        let route_service = RouteNewService::new(extract);
+        let factory = Box::new(route_service);
         self.services.push((route.0.to_owned(), factory));
         self
     }
