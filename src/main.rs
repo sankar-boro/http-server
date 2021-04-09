@@ -10,6 +10,7 @@ mod extensions;
 mod web;
 mod builder;
 mod scope;
+// mod http;
 
 use service::ServiceConfig;
 use app::App;
@@ -54,6 +55,12 @@ pub trait FromRequest: Clone {
 impl FromRequest for String {
     fn from_request(data: String) -> Self {
       data
+    }
+}
+
+impl FromRequest for (String, ) {
+    fn from_request(data: String) -> Self {
+      (data, )
     }
 }
 

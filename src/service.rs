@@ -57,14 +57,25 @@ pub trait ServiceFactory {
   fn new_service(&self) -> Self::Service;
 }
 
-impl<T, String, Res, O> Factory<String, Res, O> for T 
+impl<T, A, Res, O> Factory<(A,), Res, O> for T 
 where 
-  T: Fn(String) -> Res + Clone + 'static, 
+  T: Fn(A,) -> Res + Clone + 'static, 
   Res: Future<Output=O>,
   O: Responder,
 {
-  fn factory_call(&self, param: String) -> Res {
-    (self)(param)
+  fn factory_call(&self, (one,): (A,)) -> Res {
+    (self)(one)
+  }
+}
+
+impl<T, A, B, Res, O> Factory<(A,B,), Res, O> for T 
+where 
+  T: Fn(A, B,) -> Res + Clone + 'static, 
+  Res: Future<Output=O>,
+  O: Responder,
+{
+  fn factory_call(&self, (one, two,): (A, B,)) -> Res {
+    (self)(one, two)
   }
 }
 
@@ -172,10 +183,10 @@ where
   Res: Future<Output=O>,
   O: Responder,
 {
-  type Request = (Arg, String);
+  type Request = Arg;
   type Response = String;
   
-  fn call(&self, (param, _): Self::Request) -> Self::Response {
+  fn call(&self, param: Self::Request) -> Self::Response {
     let t = self.service.factory_call(param);
     let r = task::block_on(t);
     r.respond()
@@ -185,7 +196,7 @@ where
 impl<T: FromRequest, S> Service for ExtractService<T, S>
 where
     S: Service<
-            Request = (T, String),
+            Request = T,
             Response = String,
         > + Clone,
 {
@@ -194,7 +205,7 @@ where
 
     fn call(&self, req: Self::Request) -> Self::Response {
       let t = T::from_request(req.clone());
-      let b = self.service.call((t, req));
+      let b = self.service.call(t);
       b
     }
 }
@@ -202,7 +213,7 @@ where
 
 impl<T: FromRequest, S> ServiceFactory for Extract<T, S> 
 where S: Service<
-          Request = (T, String),
+          Request = T,
           Response = String,
         > + Clone,
 {

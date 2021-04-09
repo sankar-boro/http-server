@@ -1,5 +1,5 @@
-use std::{collections::HashMap, io::{Read, Write}};
-use crate::App;
+use std::{collections::HashMap, io::{Read, Write}, net::TcpStream, sync::mpsc::Receiver};
+use crate::{App, service::Service};
 use crate::builder::Builder;
 
 pub type AppInstance = Box<dyn Fn() -> App + 'static>;
@@ -7,67 +7,77 @@ pub type AppInstance = Box<dyn Fn() -> App + 'static>;
 pub struct HttpServer {
     app: AppInstance,
     builder: Builder,
+    service:  HashMap<String, Box<dyn Service<Request = String, Response = String>>>,
 }
 
 impl HttpServer {
     pub fn new<F: Fn() -> App + 'static>(app: F) -> Self {
         Self { 
             app: Box::new(app), 
-            builder: Builder::new() 
+            builder: Builder::new(),
+            service: HashMap::new(),
         }
     }
 
-    pub fn run(&self) {
-        let mut ext = HashMap::new();
+    fn start(&mut self) {
         let app = (self.app)();
         let configs = app.config.get_routes().iter();
-        &app.services.iter().for_each(|data| {
-            ext.insert(data.0.clone(), &data.1);
+        &app.services.iter().for_each(|app_service| {
+            let service = app_service.1.new_service();
+            self.service.insert(app_service.0.clone(), service);
         });
 
         for scope in configs {
-            let mut r = String::from("");
-            r.push_str(&scope.scope);
+            let mut scoped_route = String::from("");
+            scoped_route.clear();
+            scoped_route.push_str(&scope.scope);
             for route in scope.name.iter() {
-                r.push_str(&route.0);
-                let s = &route.2;
-                ext.insert(r.clone(), s);
-                r.clear();
-                r.push_str(&scope.scope);
+                scoped_route.push_str(&route.0);
+                let service = route.2.new_service();
+                self.service.insert(scoped_route.clone(), service);
+                scoped_route.clear();
+                scoped_route.push_str(&scope.scope);
             }
         }
-        let r = self.builder.run();
+    }
+
+    pub fn run(&mut self) {
+        self.start();
+        let receiver = self.builder.run();
+        self.accept(receiver);
+    }
+
+    fn accept(&self, receiver: Receiver<TcpStream>) {
         loop {
-            let mut s = r.recv().unwrap();
-            let mut buffer = [0; 2048];
-            s.read(&mut buffer).unwrap();
+            let mut stream = receiver.recv().unwrap();
+            let mut buffer = [0; 1024];
+            stream.read(&mut buffer).unwrap();
             let mut headers = [httparse::EMPTY_HEADER; 16];
             let mut req = httparse::Request::new(&mut headers);
             req.parse(&buffer).unwrap();
             let uri = req.path;
             match uri {
                 Some(uri) => {
-                    let m = ext.get(uri);
-                    match m {
-                        Some(m) => {
-                            let sd = m.new_service();
-                            let nsd = sd.call("".to_string());
-                            let res = format!("HTTP/1.1 200 OK\r\n\r\n{}", &nsd);
-                            s.write(res.as_bytes()).unwrap();
+                    let service = self.service.get(uri);
+                    match service {
+                        Some(service) => {
+                            let res = service.call("".to_string());
+                            let res = format!("HTTP/1.1 200 OK\r\n\r\n{}", &res);
+                            stream.write(res.as_bytes()).unwrap();
                         }
                         None => {
                             let res = format!("HTTP/1.1 200 OK\r\n\r\nOops!");
-                            s.write(res.as_bytes()).unwrap();
+                            stream.write(res.as_bytes()).unwrap();
                         }
                     }
                 }
                 None => {
                     let res = format!("HTTP/1.1 200 OK\r\n\r\nOops!");
-                    s.write(res.as_bytes()).unwrap();
+                    stream.write(res.as_bytes()).unwrap();
                 }
             }
-            s.flush().unwrap();
-            s.shutdown(std::net::Shutdown::Both).unwrap();
+            stream.flush().unwrap();
+            stream.shutdown(std::net::Shutdown::Both).unwrap();
         }
     }
 }

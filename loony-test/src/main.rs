@@ -1,39 +1,28 @@
-#[allow(non_snake_case)]
+trait Responder {}
+struct HttpResponse(String);
+impl Responder for String {}
+impl Responder for HttpResponse {}
 
-mod responder;
-mod request;
-mod extensions;
-mod array_test;
-
-use responder::{HttpResponse, Responder};
-use request::{HttpRequest, Request};
-
-struct User {
-  name: String,
-}
-
-fn index(request: Request<User>) -> HttpResponse {
-  let mut data = String::from("Hello World!");
-  data.push_str(" This is ");
-  data.push_str(&request.request.name);
-  HttpResponse::Ok().body(data)
+fn index() -> impl Responder {
+  String::from("Index")
 }
 
 fn home() -> impl Responder {
-  "Hello World"
+  String::from("Home")
 }
 
-fn profile() -> impl Responder {
-  String::from("Profile!")
+struct App<T>{
+  services: Vec<Box<T>>
 }
 
-fn route<T, A, R>(factory: T) where T: Fn(A) -> R, R: Responder, A: HttpRequest {
-
+fn run<T, R>(factory: T) where T: Fn() -> R, R: Responder {
+  let mut services = Vec::new();
+  services.push(Box::new(factory));
+  let app = App {
+    services,
+  };
 }
 
 fn main() {
-  let request = Request::new(User { name: "Sankar".to_owned() });
-  let index = index(request);
-  let response = index.get_body();
-  println!("{}", response);
+  run(index);
 }
