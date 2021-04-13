@@ -1,7 +1,7 @@
 use std::future::Future;
 
 use crate::FromRequest;
-use crate::service::{Factory, RouteNewService, Extract, Wrapper};
+use crate::service::{Factory};
 use crate::{responder::Responder, service::{Service, ServiceFactory}};
 
 pub type BoxedRouteService = Box<
@@ -19,16 +19,30 @@ pub type BoxedRouteNewService = Box<
     >,
 >;
 
-type Method = String;
+pub enum Method {
+  GET,
+  POST,
+}
+
 type RoutePath = String;
 pub struct Route {
-    pub name: Vec<(RoutePath, Method, BoxedRouteNewService)>,
-    pub scope: String,
+    pub service: BoxedRouteNewService,
+    pub method: Method,
 }
 
 
 impl<'route> Route {
-    pub fn route<T, P, R, O>(mut self, route_path: &'route str, factory: (&'static str, T)) -> Self 
+    pub fn new() -> Route {
+        // Route {
+        //     service: Box::new(RouteNewService::new(Extract::new(Wrapper::new(|data: String| async {
+        //         String::from("")
+        //     })))),
+        //     method: Method::GET,
+        // }
+        unimplemented!()
+    }
+
+    pub fn route<T, P, R, O>(mut self, factory: T) -> Self 
     where 
         T: Factory<P, R, O> + Clone + 'static, 
         P: FromRequest + 'static,
@@ -36,23 +50,24 @@ impl<'route> Route {
         O: Responder + 'static, 
     {
         
-        let route = Box::new(RouteNewService::new(Extract::new(Wrapper::new(factory.1))));
-        self.name.push((route_path.to_owned(), factory.0.to_owned(), route));
+        // let service = Box::new(RouteNewService::new(Extract::new(Wrapper::new(factory))));
+        // self.service = service;
+        self
+    }
+
+    pub fn method(mut self, method: Method) -> Self {
+        self.method = method;
         self
     }
 }
 
-pub fn scope(scope: &str) -> Route {
-    Route {
-        scope: scope.to_string(),
-        name: Vec::new(),
-    }
+fn method(method: Method) -> Route {
+    Route::new().method(method)
+}
+pub fn get() -> Route {
+    method(Method::GET)
 }
 
-pub fn get<T>(f:T) -> (&'static str, T) {
-    ("GET", f)
-}
-
-pub fn post<T>(f:T) -> (&'static str, T) {
-    ("POST", f)
+pub fn post() -> Route {
+    method(Method::POST)
 }

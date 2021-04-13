@@ -1,14 +1,15 @@
-use std::future::Future;
+use crate::{route::Route, scope::Scope};
+use crate::route::Method;
 
-use crate::responder::Responder;
-use crate::{FromRequest, service::{Factory}};
+fn method(method: Method) -> Route {
+  Route::new().method(method)
+}
 
-pub fn get<T, P, R, O>(route: &str,  get:T) -> (&str, T) 
-where 
-  T: Factory<P, R, O> + Clone + 'static, 
-  P: FromRequest,
-  R: Future<Output=O>, 
-  O: Responder
+pub fn get() -> Route
 {
-  (route, get)
+  method(Method::GET)
+}
+
+pub fn scope(scope: &str) -> Scope {
+  Scope::new(scope)
 }

@@ -38,9 +38,9 @@ async fn index(data: String) -> impl Responder {
 
 fn routes(config: &mut ServiceConfig) {
     config.service(
-        route::scope("/user")
-        .route("/get", route::get(controller::get_user))
-        .route("/delete", route::post(controller::delete_user))
+web::scope("/user")
+        .route("/get", route::get().route(controller::get_user))
+        .route("/delete", route::post().route(controller::delete_user))
     );
 }
 

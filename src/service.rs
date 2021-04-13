@@ -2,8 +2,7 @@ use async_std::task;
 use std::future::Future;
 use std::marker::PhantomData;
 
-use crate::FromRequest;
-use crate::route::Route;
+use crate::{FromRequest, scope::Scope};
 use crate::responder::Responder;
 use crate::route::{BoxedRouteService};
 
@@ -17,7 +16,7 @@ where
 }
 
 pub struct ServiceConfig {
-  pub routes:Vec<Route>,
+  pub routes:Vec<Scope>,
 }
 
 impl ServiceConfig {
@@ -27,17 +26,17 @@ impl ServiceConfig {
     }
   }
 	
-	pub fn service(&mut self, route: Route) {
+	pub fn service(&mut self, route: Scope) {
     self.routes.push(route);
   }
 }
 
 pub trait ServiceConfigFactory {
-  fn get_routes(&self) -> &Vec<Route>;
+  fn get_routes(&self) -> &Vec<Scope>;
 }
 
 impl ServiceConfigFactory for ServiceConfig {
-  fn get_routes(&self) -> &Vec<Route> {
+  fn get_routes(&self) -> &Vec<Scope> {
     &self.routes
   }
 }

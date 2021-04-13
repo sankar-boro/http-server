@@ -53,10 +53,10 @@ impl App {
         self
     }
 
-    pub fn route<T, P, R, O>(mut self, route: (&str, T)) -> Self 
+    pub fn route<T, Arg, R, O>(mut self, route: (&str, T)) -> Self 
     where 
-        T: Factory<P, R, O> + Clone + 'static, 
-        P: FromRequest + 'static, 
+        T: Factory<Arg, R, O> + Clone + 'static, 
+        Arg: FromRequest + 'static, 
         R: Future<Output=O>+ 'static, 
         O: Responder + 'static
     {
