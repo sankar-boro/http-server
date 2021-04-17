@@ -1,7 +1,7 @@
 [package]
 authors = ["Sankar boro <sankar.boro@yahoo.com>"]
 edition = "2018"
-name = "loony-web"
+name = "http-server"
 version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -34,3 +34,7 @@ socket2 = "0.4.0"
 [dependencies.async-std]
 version = "1.7.0"
 features = ["attributes"]
+
+# [[bin]]
+# name = "main.rs"
+# path = "/src/main.rs"

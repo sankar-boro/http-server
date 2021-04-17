@@ -3,12 +3,12 @@
 use std::future::Future;
 
 use super::AppState;
-use crate::FromRequest;
+use crate::{FromRequest, service::RouteNewService};
 use crate::service::{Factory};
 use crate::responder::Responder;
 use crate::extensions::Extensions;
-use crate::service::{Service, ServiceFactory, ServiceConfigFactory};
-use crate::service::{Extract, RouteNewService, ServiceConfig, Wrapper};
+use crate::service::{Extract, ServiceConfig, Wrapper, ServiceConfigFactory, AppServiceFactory};
+use loony_service::{Service, ServiceFactory};
 
 pub trait Builder {
     type Product;
@@ -18,16 +18,18 @@ pub type BoxedRouteService = Box<
     dyn Service<
         Request = String,
         Response = String,
+        Error = (),
     >,
 >;
 
 pub type BoxedRouteNewService = Box<
     dyn ServiceFactory<
-        Request = String,
-        Response = String,
-        Service = BoxedRouteService,
-    >,
->;
+            Request = String,
+            Response = String,
+            Service = BoxedRouteService,
+            Error = (),
+        >
+    >;
 
 pub struct App {
     app_data:AppState,
@@ -62,8 +64,7 @@ impl App {
     {
         let wrapper = Wrapper::new(route.1);
         let extract = Extract::new(wrapper);
-        let route_service = RouteNewService::new(extract);
-        let factory = Box::new(route_service);
+        let factory = Box::new(RouteNewService::new(extract));
         self.services.push((route.0.to_owned(), factory));
         self
     }

@@ -10,6 +10,7 @@ mod extensions;
 mod web;
 mod builder;
 mod scope;
+mod resource;
 // mod http;
 
 use service::ServiceConfig;

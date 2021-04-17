@@ -1,23 +1,13 @@
 use std::future::Future;
+use loony_service::{
+    Service,
+    ServiceFactory
+};
 
-use crate::FromRequest;
-use crate::service::{Factory};
-use crate::{responder::Responder, service::{Service, ServiceFactory}};
-
-pub type BoxedRouteService = Box<
-    dyn Service<
-        Request = String,
-        Response = String,
-    >,
->;
-
-pub type BoxedRouteNewService = Box<
-    dyn ServiceFactory<
-        Request = String,
-        Response = String,
-        Service = BoxedRouteService,
-    >,
->;
+use crate::{FromRequest, service::{Extract, RouteNewService, Wrapper}};
+use crate::service::{Factory, AppServiceFactory};
+use crate::responder::Responder;
+use crate::app::{BoxedRouteNewService};
 
 pub enum Method {
   GET,
@@ -25,21 +15,20 @@ pub enum Method {
 }
 
 type RoutePath = String;
+
 pub struct Route {
     pub service: BoxedRouteNewService,
     pub method: Method,
 }
 
-
 impl<'route> Route {
     pub fn new() -> Route {
-        // Route {
-        //     service: Box::new(RouteNewService::new(Extract::new(Wrapper::new(|data: String| async {
-        //         String::from("")
-        //     })))),
-        //     method: Method::GET,
-        // }
-        unimplemented!()
+        Route {
+            service: Box::new(RouteNewService::new(Extract::new(Wrapper::new(|_: String| async {
+                String::from("")
+            })))),
+            method: Method::GET,
+        }
     }
 
     pub fn route<T, P, R, O>(mut self, factory: T) -> Self 
@@ -50,8 +39,8 @@ impl<'route> Route {
         O: Responder + 'static, 
     {
         
-        // let service = Box::new(RouteNewService::new(Extract::new(Wrapper::new(factory))));
-        // self.service = service;
+        let service = Box::new(RouteNewService::new(Extract::new(Wrapper::new(factory))));
+        self.service = service;
         self
     }
 
@@ -59,6 +48,42 @@ impl<'route> Route {
         self.method = method;
         self
     }
+}
+
+pub type BoxService = Box<
+            dyn Service<Request = String, Response = String, Error = ()>,
+        >;
+
+pub struct RouteService {
+    service: BoxService,
+}
+
+impl Service for RouteService {
+    type Request = String;
+    type Response = String;
+    type Error = ();
+
+    fn call(&mut self, req: Self::Request) -> Self::Response {
+        self.service.call(req)
+    }
+}
+
+impl ServiceFactory for Route {
+    type Request = String;
+    type Response = String;
+    type Error = ();
+    type Service = RouteService;
+
+    fn new_service(&self) -> Self::Service {
+        let service = self.service.new_service();
+        RouteService { service }
+    }
+}
+
+
+trait RouteFactory{}
+impl RouteFactory for Route {
+
 }
 
 fn method(method: Method) -> Route {

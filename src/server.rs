@@ -1,5 +1,8 @@
-use std::{collections::HashMap, io::{Read, Write}, net::TcpStream, sync::mpsc::Receiver};
-use crate::{App, service::Service};
+use std::{
+    net::TcpStream, 
+    sync::mpsc::Receiver
+};
+use crate::App;
 use crate::builder::Builder;
 
 pub type AppInstance = Box<dyn Fn() -> App + 'static>;
@@ -20,6 +23,8 @@ impl HttpServer {
     }
 
     fn start(&mut self) {
+        let app = (self.app)();
+        let services = &app.config;
         // let configs = app.config.get_routes().iter();
         // &app.services.iter().for_each(|app_service| {
         //     let service = app_service.1.new_service();
