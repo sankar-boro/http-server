@@ -1,6 +1,5 @@
 use crate::route::Route;
-use std::sync::Arc;
-use loony_service::{ServiceFactory, IntoServiceFactory, Service};
+use loony_service::{ServiceFactory, Service};
 use crate::route::RouteService;
 
 pub trait HttpServiceFactory {
@@ -10,15 +9,16 @@ pub trait HttpServiceFactory {
 pub struct Resource {
   path: String,
   route: Route,
-  factory_ref: Option<ResourceFactory>,
 }
 
 impl Resource {
-  pub fn new(path: &str) -> Self {
+  pub fn new(path: &str, scope: &str) -> Self {
+    let mut route = String::from("");
+    route.push_str(scope);
+    route.push_str(path);
     Resource {
-      path: path.to_owned(),
+      path: route,
       route: Route::new(),
-      factory_ref: None,
     }
   }
 
@@ -35,27 +35,8 @@ impl HttpServiceFactory for Resource
     }
 }
 
-// impl<T> IntoServiceFactory<T> for Resource
-// where
-//     T: ServiceFactory<
-//         Request = String,
-//         Response = String,
-//         Error = (),
-//     >,
-// {
-//     fn into_factory(self) -> T {
-//         self.factory_ref = Some(ResourceFactory {
-//             route: self.route,
-//         });
-//         self
-//     }
-// }
 
-pub struct ResourceFactory {
-    route: Route,
-}
-
-impl ServiceFactory for ResourceFactory {
+impl ServiceFactory for Resource {
     type Request = String;
     type Response = String;
     type Error = ();
@@ -64,13 +45,15 @@ impl ServiceFactory for ResourceFactory {
     fn new_service(&self) -> Self::Service {
         let route = self.route.new_service();
         ResourceService {
+          path: self.path.clone(),
           route
         }
     }
 }
 
 pub struct ResourceService {
-    route: RouteService,
+    pub route: RouteService,
+    pub path: String,
 }
 
 impl Service for ResourceService {
@@ -78,7 +61,7 @@ impl Service for ResourceService {
     type Response = String;
     type Error = ();
 
-    fn call(&mut self, mut req: Self::Request) -> Self::Response {
+    fn call(&mut self, req: Self::Request) -> Self::Response {
         self.route.call(req)
     }
 }

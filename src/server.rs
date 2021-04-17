@@ -25,6 +25,7 @@ impl HttpServer {
     fn start(&mut self) {
         let app = (self.app)();
         let services = &app.config;
+        let scopes = services.get_routes();
         // let configs = app.config.get_routes().iter();
         // &app.services.iter().for_each(|app_service| {
         //     let service = app_service.1.new_service();
@@ -43,12 +44,19 @@ impl HttpServer {
         //         scoped_route.push_str(&scope.scope);
         //     }
         // }
+
+        for scope in scopes.iter() {
+            for route in scope.services.iter() {
+                let s = route.new_service();
+                println!("{}", s.path);
+            }
+        }
     }
 
     pub fn run(&mut self) {
         self.start();
-        let receiver = self.builder.run();
-        self.accept(receiver);
+        // let receiver = self.builder.run();
+        // self.accept(receiver);
     }
 
     fn accept(&self, receiver: Receiver<TcpStream>) {
