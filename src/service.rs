@@ -1,5 +1,4 @@
 use async_std::task;
-use futures::future::Ready; 
 use std::future::Future;
 use std::marker::PhantomData;
 
@@ -14,10 +13,6 @@ where
   O: Responder
 {
   fn factory_call(&self, param: Arg) -> Res;
-}
-
-pub trait AppServiceFactory{
-  fn register(&self);
 }
 
 pub struct ServiceConfig {
@@ -148,13 +143,6 @@ impl<Arg: FromRequest, S> Extract<Arg, S> {
     }
   }  
 }
-
-impl<Arg: FromRequest, S> AppServiceFactory for Extract<Arg, S> {
-  fn register(&self) {
-      
-  }
-}
-
 // Trait Implementation
 
 impl<T, Arg, Res, O> Service for Wrapper<T, Arg, Res, O> 

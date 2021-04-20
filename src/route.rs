@@ -5,7 +5,7 @@ use loony_service::{
 };
 
 use crate::{FromRequest, service::{Extract, RouteNewService, Wrapper}};
-use crate::service::{Factory, AppServiceFactory};
+use crate::service::{Factory};
 use crate::responder::Responder;
 use crate::app::{BoxedRouteNewService};
 

@@ -2,10 +2,6 @@ use crate::route::Route;
 use loony_service::{ServiceFactory, Service};
 use crate::route::RouteService;
 
-pub trait HttpServiceFactory {
-  fn register(self);
-}
-
 pub struct Resource {
   path: String,
   route: Route,
@@ -27,14 +23,6 @@ impl Resource {
     self
   }
 }
-
-impl HttpServiceFactory for Resource
-{
-    fn register(self) {
-      
-    }
-}
-
 
 impl ServiceFactory for Resource {
     type Request = String;

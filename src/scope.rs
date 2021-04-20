@@ -6,9 +6,6 @@ use crate::{
     route::Route};
 use loony_service::{ServiceFactory};
 
-pub trait ScopeFactory{
-    fn register(&mut self);
-}
 pub struct Scope {
     scope: String,
     pub services: Vec<Box<dyn ServiceFactory<Request = String, Response = String, Error = (), Service=ResourceService>>>,

@@ -7,7 +7,7 @@ use crate::{FromRequest, service::RouteNewService};
 use crate::service::{Factory};
 use crate::responder::Responder;
 use crate::extensions::Extensions;
-use crate::service::{Extract, ServiceConfig, Wrapper, ServiceConfigFactory, AppServiceFactory};
+use crate::service::{Extract, ServiceConfig, Wrapper, ServiceConfigFactory};
 use loony_service::{Service, ServiceFactory};
 
 pub trait Builder {
