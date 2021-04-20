@@ -23,7 +23,7 @@ impl HttpServer {
     fn start(&mut self) {
         let app = (self.app)();
         let services = &app.config;
-        let scopes = services.get_routes();
+        let scopes = services.get_services();
 
         for scope in scopes.iter() {
             for route in scope.services.iter() {

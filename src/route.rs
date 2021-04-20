@@ -4,10 +4,11 @@ use loony_service::{
     ServiceFactory
 };
 
-use crate::{FromRequest, service::{Extract, RouteNewService, Wrapper}};
-use crate::service::{Factory};
+use crate::{FromRequest};
+use crate::service::{Factory,Extract, RouteNewService, Wrapper};
 use crate::responder::Responder;
 use crate::app::{BoxedRouteNewService};
+use crate::default::default;
 
 pub enum Method {
   GET,
@@ -24,9 +25,7 @@ pub struct Route {
 impl<'route> Route {
     pub fn new() -> Route {
         Route {
-            service: Box::new(RouteNewService::new(Extract::new(Wrapper::new(|_: String| async {
-                String::from("")
-            })))),
+            service: Box::new(RouteNewService::new(Extract::new(Wrapper::new(default)))),
             method: Method::GET,
         }
     }
@@ -50,9 +49,7 @@ impl<'route> Route {
     }
 }
 
-pub type BoxService = Box<
-            dyn Service<Request = String, Response = String, Error = ()>,
-        >;
+pub type BoxService = Box<dyn Service<Request = String, Response = String, Error = ()>>;
 
 pub struct RouteService {
     service: BoxService,
@@ -80,12 +77,6 @@ impl ServiceFactory for Route {
     }
 }
 
-
-trait RouteFactory{}
-impl RouteFactory for Route {
-
-}
-
 fn method(method: Method) -> Route {
     Route::new().method(method)
 }
@@ -95,4 +86,24 @@ pub fn get() -> Route {
 
 pub fn post() -> Route {
     method(Method::POST)
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    async fn index(req: String) -> String {
+        req
+    }
+    #[test]
+    fn route() {
+        let route = Route::new();
+        let mut route_service = route.new_service();
+        let service = route_service.call("name".to_string());
+        assert_eq!("Hello World!", service);
+
+        let route = Route::new().route(index);
+        let mut route_service = route.new_service();
+        let service = route_service.call("name".to_string());
+        assert_eq!("name", service);
+    }
 }

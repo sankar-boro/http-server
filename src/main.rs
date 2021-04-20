@@ -11,9 +11,11 @@ mod web;
 mod builder;
 mod scope;
 mod resource;
+mod config;
+mod default;
 // mod http;
 
-use service::ServiceConfig;
+use config::ServiceConfig;
 use app::App;
 use server::HttpServer;
 use crate::responder::Responder;
@@ -39,7 +41,7 @@ async fn index(data: String) -> impl Responder {
 
 fn routes(config: &mut ServiceConfig) {
     config.service(
-web::scope("/user")
+        web::scope("/user")
         .route("/get", route::get().route(controller::get_user))
         .route("/delete", route::post().route(controller::delete_user))
     );
@@ -68,13 +70,14 @@ impl FromRequest for (String, ) {
 
 #[async_std::main]
 async fn main() {
+    let route = web::get().route(index);
     HttpServer::new(move ||
         App::new()
         .app_data( AppState {
             name: "Loony".to_owned(),
         })
         .configure(routes)
-        .route(("/", index))
+        .route("/", web::get().route(index))
     )
     .run();
 }   

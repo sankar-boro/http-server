@@ -2,10 +2,10 @@ use async_std::task;
 use std::future::Future;
 use std::marker::PhantomData;
 
+use crate::{FromRequest};
 use crate::responder::Responder;
-use crate::{FromRequest, scope::Scope};
-use loony_service::{Service, ServiceFactory};
 use crate::app::{BoxedRouteService};
+use loony_service::{Service, ServiceFactory};
 
 pub trait Factory<Arg, Res, O>: Clone + 'static 
 where 
@@ -13,32 +13,6 @@ where
   O: Responder
 {
   fn factory_call(&self, param: Arg) -> Res;
-}
-
-pub struct ServiceConfig {
-  pub routes:Vec<Scope>,
-}
-
-impl ServiceConfig {
-  pub fn new() -> Self {
-    ServiceConfig {
-      routes: Vec::new(),
-    }
-  }
-	
-	pub fn service(&mut self, route: Scope) {
-    self.routes.push(route);
-  }
-}
-
-pub trait ServiceConfigFactory {
-  fn get_routes(&self) -> &Vec<Scope>;
-}
-
-impl ServiceConfigFactory for ServiceConfig {
-  fn get_routes(&self) -> &Vec<Scope> {
-    &self.routes
-  }
 }
 
 impl<T, A, Res, O> Factory<(A,), Res, O> for T 
@@ -214,9 +188,8 @@ where
     type Error = ();
 
     fn call(&mut self, req: Self::Request) -> Self::Response {
-      let a = &mut self.service;
-      let b = a.call(req);
-      b
+      let service = &mut self.service;
+      service.call(req)
     }
 }
 
@@ -262,11 +235,10 @@ where
     type Error = ();
 
     fn new_service(&self) -> Self::Service {
-      let s = &self.service;
-      let service = s.new_service();
-      let d = Box::new(RouteServiceWrapper {
+      let service = &self.service;
+      let service = service.new_service();
+      Box::new(RouteServiceWrapper {
         service,
-      });
-      d
+      })
     }
 }

@@ -3,12 +3,13 @@
 use std::future::Future;
 
 use super::AppState;
-use crate::{FromRequest, service::RouteNewService};
+use crate::{FromRequest, route::{Route, RouteService}};
 use crate::service::{Factory};
 use crate::responder::Responder;
 use crate::extensions::Extensions;
-use crate::service::{Extract, ServiceConfig, Wrapper, ServiceConfigFactory};
+use crate::service::{Extract, Wrapper};
 use loony_service::{Service, ServiceFactory};
+use crate::config::{ ServiceConfig, ServiceConfigFactory };
 
 pub trait Builder {
     type Product;
@@ -31,10 +32,18 @@ pub type BoxedRouteNewService = Box<
         >
     >;
 
+pub type RouteNewService = Box<
+    dyn ServiceFactory<
+            Request = String,
+            Response = String,
+            Service = RouteService,
+            Error = (),
+        >
+    >;
 pub struct App {
     app_data:AppState,
     pub extensions: Extensions,
-    pub services: Vec<(String, BoxedRouteNewService)>,
+    pub services: Vec<RouteNewService>,
     pub config: Box<dyn ServiceConfigFactory>,
 }
 
@@ -55,30 +64,11 @@ impl App {
         self
     }
 
-    pub fn route<T, Arg, R, O>(mut self, route: (&str, T)) -> Self 
-    where 
-        T: Factory<Arg, R, O> + Clone + 'static, 
-        Arg: FromRequest + 'static, 
-        R: Future<Output=O>+ 'static, 
-        O: Responder + 'static
+    pub fn route(mut self, route: &str, factory: Route) -> Self 
     {
-        let wrapper = Wrapper::new(route.1);
-        let extract = Extract::new(wrapper);
-        let factory = Box::new(RouteNewService::new(extract));
-        self.services.push((route.0.to_owned(), factory));
+        self.services.push(Box::new(factory));
         self
     }
-
-    // pub fn service<T, P, R>(mut self, route: &str, factory: T) -> Self 
-    // where 
-    //     T: Factory<P, R> + Clone + 'static, 
-    //     P: FromRequest + 'static, 
-    //     // R: Future<Output=O> + 'static, 
-    //     R: Responder
-    // {
-    //     self.services.push((route.to_string(), Box::new(HttpServiceFactoryWrapper::new(factory))));
-    //     self
-    // }
 
     pub fn configure<'a, T>(mut self, cnfg: T) -> Self where T: Fn(&mut ServiceConfig) {
         let mut configs = ServiceConfig::new();
@@ -89,6 +79,29 @@ impl App {
 
 }
 
-impl Builder for App {
-    type Product = App;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::web;
+    use crate::controller;
+    use crate::route::Route;
+    use loony_service::Service;
+
+    async fn index(req: String) -> String {
+        req
+    }
+
+    #[test]
+    fn app() {
+        let app = App::new()
+        .configure(|cfg: &mut ServiceConfig| {
+            cfg.service(
+                    web::scope("/user")
+                    .route("/get", Route::new().route(controller::get_user))
+                );
+        });
+
+        let services = app.services;
+        assert_eq!(1, services.len());
+    }
 }
