@@ -10,6 +10,7 @@ use crate::responder::Responder;
 use crate::app::{BoxedRouteNewService};
 use crate::default::default;
 
+#[derive(Clone)]
 pub enum Method {
   GET,
   POST,
@@ -18,13 +19,15 @@ pub enum Method {
 type RoutePath = String;
 
 pub struct Route {
+    pub path: String,
     pub service: BoxedRouteNewService,
     pub method: Method,
 }
 
 impl<'route> Route {
-    pub fn new() -> Route {
+    pub fn new(path: &str) -> Route {
         Route {
+            path: path.to_owned(),
             service: Box::new(RouteNewService::new(Extract::new(Wrapper::new(default)))),
             method: Method::GET,
         }
@@ -53,6 +56,7 @@ pub type BoxService = Box<dyn Service<Request = String, Response = String, Error
 
 pub struct RouteService {
     service: BoxService,
+    method: Method,
 }
 
 impl Service for RouteService {
@@ -73,19 +77,20 @@ impl ServiceFactory for Route {
 
     fn new_service(&self) -> Self::Service {
         let service = self.service.new_service();
-        RouteService { service }
+        RouteService { service, method: self.method.clone() }
     }
 }
 
-fn method(method: Method) -> Route {
-    Route::new().method(method)
-}
-pub fn get() -> Route {
-    method(Method::GET)
+fn method(path: &str, method: Method) -> Route {
+    Route::new(path).method(method)
 }
 
-pub fn post() -> Route {
-    method(Method::POST)
+pub fn get(path: &str) -> Route {
+    method(path, Method::GET)
+}
+
+pub fn post(path: &str) -> Route {
+    method(path, Method::POST)
 }
 #[cfg(test)]
 mod tests {
@@ -96,12 +101,12 @@ mod tests {
     }
     #[test]
     fn route() {
-        let route = Route::new();
+        let route = Route::new("/get");
         let mut route_service = route.new_service();
         let service = route_service.call("name".to_string());
         assert_eq!("Hello World!", service);
 
-        let route = Route::new().route(index);
+        let route = Route::new("/delete").route(index);
         let mut route_service = route.new_service();
         let service = route_service.call("name".to_string());
         assert_eq!("name", service);

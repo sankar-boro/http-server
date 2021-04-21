@@ -1,9 +1,28 @@
-use crate::scope::{
-  Scope,
+use crate::{
+  app::RouteNewService, 
+  resource::{
+    Resource, 
+    ResourceService,
+  },
+  scope::{
+    Scope,
+  }
 };
+use loony_service::ServiceFactory;
+
+
+type ScopeFactory = Box<
+    dyn ServiceFactory<
+        Request = String, 
+        Response = String, 
+        Error = (), 
+        // Service= RouteService
+        Service = ResourceService
+    >
+>;
 
 pub struct ServiceConfig {
-  pub services:Vec<Scope>,
+  pub services:Vec<ScopeFactory>,
 }
 
 impl ServiceConfig {
@@ -14,16 +33,7 @@ impl ServiceConfig {
   }
 	
 	pub fn service(&mut self, service: Scope) {
-    self.services.push(service);
-  }
-}
-
-pub trait ServiceConfigFactory {
-  fn get_services(&self) -> &Vec<Scope>;
-}
-
-impl ServiceConfigFactory for ServiceConfig {
-  fn get_services(&self) -> &Vec<Scope> {
-    &self.services
+    let services = service.services;
+    self.services.extend(services);
   }
 }

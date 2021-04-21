@@ -1,9 +1,5 @@
-use crate::{
-    resource::{
-        Resource, 
-        ResourceService, 
-    },
-    route::Route};
+use crate::route::{Route, RouteService};
+use crate::resource::{Resource, ResourceService};
 use loony_service::{ServiceFactory};
 
 type ScopeFactory = Box<
@@ -11,12 +7,13 @@ type ScopeFactory = Box<
         Request = String, 
         Response = String, 
         Error = (), 
-        Service=ResourceService
+        // Service= RouteService
+        Service = ResourceService
     >
 >;
 
 pub struct Scope {
-    scope: String,
+    pub scope: String,
     pub services: Vec<ScopeFactory>,
 }
 
@@ -28,9 +25,9 @@ impl Scope {
         }
     }
 
-    pub fn route(mut self, path: &str, route: Route) -> Self {
-        let resource = Resource::new(path, &self.scope).route(route);
-        self.services.push(Box::new(resource));
+    pub fn route(mut self, route: Route) -> Self {
+        // self.services.push(Box::new(route));
+        self.services.push(Box::new(Resource::new(self.scope.clone()).route(route)));
         self
     }
 }
@@ -38,8 +35,6 @@ impl Scope {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use loony_service::Service;
 
     async fn index(req: String) -> String {
         req
@@ -47,16 +42,5 @@ mod tests {
 
     #[test]
     fn scope() {
-        let scope = Scope::new("/user");
-        let route = scope
-        .route("/get", Route::new().route(index))
-        .route("/delete", Route::new().route(index));
-        let services = route.services.iter();
-        for service in services {
-            let ser = service.new_service();
-            let mut route = ser.route;
-            let s = route.call("name".to_string());
-            assert_eq!("name", s);
-        }
     }
 }

@@ -1,15 +1,11 @@
 #![allow(dead_code)]
 
-use std::future::Future;
-
 use super::AppState;
-use crate::{FromRequest, route::{Route, RouteService}};
-use crate::service::{Factory};
-use crate::responder::Responder;
+use crate::{route::{Route, RouteService}};
 use crate::extensions::Extensions;
-use crate::service::{Extract, Wrapper};
 use loony_service::{Service, ServiceFactory};
-use crate::config::{ ServiceConfig, ServiceConfigFactory };
+use crate::config::{ ServiceConfig };
+use crate::resource::{Resource, ResourceService};
 
 pub trait Builder {
     type Product;
@@ -36,7 +32,8 @@ pub type RouteNewService = Box<
     dyn ServiceFactory<
             Request = String,
             Response = String,
-            Service = RouteService,
+            // Service = RouteService,
+            Service = ResourceService,
             Error = (),
         >
     >;
@@ -44,7 +41,6 @@ pub struct App {
     app_data:AppState,
     pub extensions: Extensions,
     pub services: Vec<RouteNewService>,
-    pub config: Box<dyn ServiceConfigFactory>,
 }
 
 impl App {
@@ -55,7 +51,6 @@ impl App {
             },
             extensions: Extensions::new(),
             services: Vec::new(),
-            config: Box::new(ServiceConfig::new()),
         }
     }
 
@@ -64,16 +59,16 @@ impl App {
         self
     }
 
-    pub fn route(mut self, route: &str, factory: Route) -> Self 
+    pub fn route(mut self, route: Route) -> Self 
     {
-        self.services.push(Box::new(factory));
+        self.services.push(Box::new(Resource::new("".to_string()).route(route)));
         self
     }
 
     pub fn configure<'a, T>(mut self, cnfg: T) -> Self where T: Fn(&mut ServiceConfig) {
         let mut configs = ServiceConfig::new();
         cnfg(&mut configs);
-        self.config = Box::new(configs);
+        self.services.extend(configs.services);
         self
     }
 
@@ -85,7 +80,6 @@ mod tests {
     use crate::web;
     use crate::controller;
     use crate::route::Route;
-    use loony_service::Service;
 
     async fn index(req: String) -> String {
         req
@@ -97,11 +91,13 @@ mod tests {
         .configure(|cfg: &mut ServiceConfig| {
             cfg.service(
                     web::scope("/user")
-                    .route("/get", Route::new().route(controller::get_user))
+                    .route(Route::new("/user").route(controller::get_user))
+                    .route(Route::new("/delete").route(controller::get_user))
                 );
-        });
+        }).route(web::get("/").route(index));
 
         let services = app.services;
-        assert_eq!(1, services.len());
+        assert_eq!(3, services.len());
     }
 }
+

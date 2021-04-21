@@ -4,6 +4,7 @@ use std::{
 };
 use crate::App;
 use crate::builder::Builder;
+use loony_service::Service;
 
 pub type AppInstance = Box<dyn Fn() -> App + 'static>;
 
@@ -22,14 +23,11 @@ impl HttpServer {
 
     fn start(&mut self) {
         let app = (self.app)();
-        let services = &app.config;
-        let scopes = services.get_services();
-
-        for scope in scopes.iter() {
-            for route in scope.services.iter() {
-                let s = route.new_service();
-                println!("{}", s.path);
-            }
+        let services = app.services;
+        for service in services.iter() {
+            let mut new_service = service.new_service();
+            let res = new_service.call("Request: ".to_string());
+            println!("{}", res);
         }
     }
 

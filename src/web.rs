@@ -1,13 +1,13 @@
 use crate::{route::Route, scope::Scope};
 use crate::route::Method;
 
-fn method(method: Method) -> Route {
-  Route::new().method(method)
+fn method(path: &str, method: Method) -> Route {
+  Route::new(path).method(method)
 }
 
-pub fn get() -> Route
+pub fn get(path: &str) -> Route
 {
-  method(Method::GET)
+  method(path, Method::GET)
 }
 
 pub fn scope(scope: &str) -> Scope {

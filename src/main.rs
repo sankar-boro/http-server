@@ -13,7 +13,6 @@ mod scope;
 mod resource;
 mod config;
 mod default;
-// mod http;
 
 use config::ServiceConfig;
 use app::App;
@@ -34,16 +33,16 @@ fn writer<W: Write>(f: &mut W, s: &str) -> Result<(), Error> {
 
 async fn index(data: String) -> impl Responder {
     let mut buf = String::new();
-    writer(&mut buf, "Hello World! ").unwrap();
     writer(&mut buf, &data).unwrap();
+    writer(&mut buf, "Hello World! ").unwrap();
     buf
 }
 
 fn routes(config: &mut ServiceConfig) {
     config.service(
         web::scope("/user")
-        .route("/get", route::get().route(controller::get_user))
-        .route("/delete", route::post().route(controller::delete_user))
+        .route(route::get("/get").route(controller::get_user))
+        .route(route::post("/delete").route(controller::delete_user))
     );
 }
 
@@ -70,14 +69,14 @@ impl FromRequest for (String, ) {
 
 #[async_std::main]
 async fn main() {
-    let route = web::get().route(index);
+    let route = web::get("/get").route(index);
     HttpServer::new(move ||
         App::new()
         .app_data( AppState {
             name: "Loony".to_owned(),
         })
         .configure(routes)
-        .route("/", web::get().route(index))
+        .route(web::get("/get").route(index))
     )
     .run();
 }   
