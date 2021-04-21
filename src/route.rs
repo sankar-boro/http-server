@@ -5,9 +5,8 @@ use loony_service::{
 };
 
 use crate::{FromRequest};
-use crate::service::{Factory,Extract, RouteNewService, Wrapper};
+use crate::service::{Factory,Extract, RouteServiceFactory, Wrapper};
 use crate::responder::Responder;
-use crate::app::{BoxedRouteNewService};
 use crate::default::default;
 
 #[derive(Clone)]
@@ -16,11 +15,26 @@ pub enum Method {
   POST,
 }
 
-type RoutePath = String;
+pub type BoxedRouteService = Box<
+    dyn Service<
+        Request = String,
+        Response = String,
+        Error = (),
+    >,
+>;
+
+pub type BoxedRouteServiceFactory = Box<
+    dyn ServiceFactory<
+            Request = String,
+            Response = String,
+            Service = BoxedRouteService,
+            Error = (),
+        >
+    >;
 
 pub struct Route {
     pub path: String,
-    pub service: BoxedRouteNewService,
+    pub service: BoxedRouteServiceFactory,
     pub method: Method,
 }
 
@@ -28,7 +42,7 @@ impl<'route> Route {
     pub fn new(path: &str) -> Route {
         Route {
             path: path.to_owned(),
-            service: Box::new(RouteNewService::new(Extract::new(Wrapper::new(default)))),
+            service: Box::new(RouteServiceFactory::new(Extract::new(Wrapper::new(default)))),
             method: Method::GET,
         }
     }
@@ -41,7 +55,7 @@ impl<'route> Route {
         O: Responder + 'static, 
     {
         
-        let service = Box::new(RouteNewService::new(Extract::new(Wrapper::new(factory))));
+        let service = Box::new(RouteServiceFactory::new(Extract::new(Wrapper::new(factory))));
         self.service = service;
         self
     }

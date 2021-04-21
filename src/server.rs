@@ -1,8 +1,5 @@
-use std::{
-    net::TcpStream, 
-    sync::mpsc::Receiver
-};
-use crate::App;
+use std::{borrow::Borrow, net::TcpStream, sync::mpsc::Receiver};
+use crate::{App, app::AppServiceFactory};
 use crate::builder::Builder;
 use loony_service::Service;
 
@@ -22,12 +19,15 @@ impl HttpServer {
     }
 
     fn start(&mut self) {
-        let app = (self.app)();
-        let services = app.services;
-        for service in services.iter() {
-            let mut new_service = service.new_service();
-            let res = new_service.call("Request: ".to_string());
-            println!("{}", res);
+        let mut app = (self.app)();
+        app.register();
+        if let Some(factories) = app.factories {
+            let factories = factories;
+            for factory in factories {
+                let mut factory = factory;
+                let res = &mut factory.call("".to_string());
+                println!("Route: {}\nResponse: {}", factory.path, res);
+            }
         }
     }
 

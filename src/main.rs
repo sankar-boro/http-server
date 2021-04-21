@@ -69,14 +69,13 @@ impl FromRequest for (String, ) {
 
 #[async_std::main]
 async fn main() {
-    let route = web::get("/get").route(index);
     HttpServer::new(move ||
         App::new()
         .app_data( AppState {
             name: "Loony".to_owned(),
         })
         .configure(routes)
-        .route(web::get("/get").route(index))
+        .route(web::get("/").route(index))
     )
     .run();
 }   

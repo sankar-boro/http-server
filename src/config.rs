@@ -1,7 +1,5 @@
 use crate::{
-  app::RouteNewService, 
   resource::{
-    Resource, 
     ResourceService,
   },
   scope::{
@@ -10,19 +8,17 @@ use crate::{
 };
 use loony_service::ServiceFactory;
 
-
-type ScopeFactory = Box<
+type BoxedResourceServiceFactory = Box<
     dyn ServiceFactory<
         Request = String, 
         Response = String, 
         Error = (), 
-        // Service= RouteService
         Service = ResourceService
     >
 >;
 
 pub struct ServiceConfig {
-  pub services:Vec<ScopeFactory>,
+  pub services:Vec<BoxedResourceServiceFactory>,
 }
 
 impl ServiceConfig {

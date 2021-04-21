@@ -2,7 +2,7 @@ use crate::route::{Route, RouteService};
 use crate::resource::{Resource, ResourceService};
 use loony_service::{ServiceFactory};
 
-type ScopeFactory = Box<
+pub type BoxedResourceServiceFactory = Box<
     dyn ServiceFactory<
         Request = String, 
         Response = String, 
@@ -14,7 +14,7 @@ type ScopeFactory = Box<
 
 pub struct Scope {
     pub scope: String,
-    pub services: Vec<ScopeFactory>,
+    pub services: Vec<BoxedResourceServiceFactory>,
 }
 
 impl Scope {

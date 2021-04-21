@@ -4,7 +4,7 @@ use std::marker::PhantomData;
 
 use crate::{FromRequest};
 use crate::responder::Responder;
-use crate::app::{BoxedRouteService};
+use crate::route::{BoxedRouteService};
 use loony_service::{Service, ServiceFactory};
 
 pub trait Factory<Arg, Res, O>: Clone + 'static 
@@ -62,7 +62,7 @@ struct RouteServiceWrapper<T: Service> {
     service: T,
 }
 
-pub struct RouteNewService<T>
+pub struct RouteServiceFactory<T>
 where
   T: ServiceFactory<
     Request=String
@@ -203,7 +203,7 @@ where
 //     }
 // }
 
-impl<T> RouteNewService<T>
+impl<T> RouteServiceFactory<T>
 where
   T: ServiceFactory<
     Request=String,
@@ -219,7 +219,7 @@ where
 }
 
 
-impl<T> ServiceFactory for RouteNewService<T> 
+impl<T> ServiceFactory for RouteServiceFactory<T> 
 where 
   T: ServiceFactory<
     Request=String,

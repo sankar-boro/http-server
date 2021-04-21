@@ -153,3 +153,7 @@ where
 {
     tp.into_service()
 }
+
+/// `BoxedServiceFactory` is a Factory that creates new `Service` Object in the heap.
+/// `Service` helps transform `Request` to `Response`;
+pub type BoxedServiceFactory<S, Req, Res, Err> = Box<dyn ServiceFactory<Request=Req, Response=Res, Error=Err, Service=S>>;

@@ -1,46 +1,21 @@
 #![allow(dead_code)]
 
 use super::AppState;
-use crate::{route::{Route, RouteService}};
+use crate::{resource::ResourceService, route::{Route, BoxedRouteService, BoxedRouteServiceFactory}};
 use crate::extensions::Extensions;
-use loony_service::{Service, ServiceFactory};
 use crate::config::{ ServiceConfig };
-use crate::resource::{Resource, ResourceService};
+use crate::resource::{Resource};
+use crate::scope::{BoxedResourceServiceFactory};
 
 pub trait Builder {
     type Product;
 }
 
-pub type BoxedRouteService = Box<
-    dyn Service<
-        Request = String,
-        Response = String,
-        Error = (),
-    >,
->;
-
-pub type BoxedRouteNewService = Box<
-    dyn ServiceFactory<
-            Request = String,
-            Response = String,
-            Service = BoxedRouteService,
-            Error = (),
-        >
-    >;
-
-pub type RouteNewService = Box<
-    dyn ServiceFactory<
-            Request = String,
-            Response = String,
-            // Service = RouteService,
-            Service = ResourceService,
-            Error = (),
-        >
-    >;
 pub struct App {
     app_data:AppState,
     pub extensions: Extensions,
-    pub services: Vec<RouteNewService>,
+    pub services: Vec<BoxedResourceServiceFactory>,
+    pub factories: Option<Vec<ResourceService>>,
 }
 
 impl App {
@@ -51,6 +26,7 @@ impl App {
             },
             extensions: Extensions::new(),
             services: Vec::new(),
+            factories: None,
         }
     }
 
@@ -72,6 +48,23 @@ impl App {
         self
     }
 
+}
+
+pub trait AppServiceFactory {
+    fn register(&mut self);
+}
+
+impl AppServiceFactory for App {
+    fn register(&mut self) {
+        let mut factories = Vec::new();
+        let resource_services = &self.services;
+        for resource_service in resource_services.iter() {
+            let resource_service = resource_service.new_service();
+            factories.push(resource_service); 
+        }
+
+        self.factories = Some(factories);
+    }
 }
 
 #[cfg(test)]
