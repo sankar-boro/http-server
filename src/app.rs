@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use super::AppState;
-use crate::{resource::ResourceService, route::{Route, BoxedRouteService, BoxedRouteServiceFactory}};
+use crate::{resource::ResourceService, route::Route};
 use crate::extensions::Extensions;
 use crate::config::{ ServiceConfig };
 use crate::resource::{Resource};

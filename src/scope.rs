@@ -1,4 +1,4 @@
-use crate::route::{Route, RouteService};
+use crate::route::{Route};
 use crate::resource::{Resource, ResourceService};
 use loony_service::{ServiceFactory};
 
@@ -7,7 +7,6 @@ pub type BoxedResourceServiceFactory = Box<
         Request = String, 
         Response = String, 
         Error = (), 
-        // Service= RouteService
         Service = ResourceService
     >
 >;
