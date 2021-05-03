@@ -1,9 +1,10 @@
-use std::{cell::RefCell, net::TcpStream, rc::Rc, sync::mpsc::Receiver};
+use std::{cell::{RefCell}, net::TcpStream, rc::Rc, sync::mpsc::Receiver};
 use crate::{App, app::AppServiceFactory, resource::ResourceService};
 use crate::builder::Builder;
-use std::io::{Read, Write};
 use loony_service::Service;
 use ahash::AHashMap;
+use std::io::{Read, Write};
+
 
 pub type AppInstance = Box<dyn Fn() -> App + 'static>;
 
@@ -42,6 +43,7 @@ impl HttpServer {
     fn accept(&self, receiver: Receiver<TcpStream>) {
         loop {
             let mut stream = receiver.recv().unwrap();
+
             let mut buffer = [0; 1024];
             stream.read(&mut buffer).unwrap();
             let mut headers = [httparse::EMPTY_HEADER; 16];
@@ -54,8 +56,8 @@ impl HttpServer {
                         Some(service) => {
                             let mut service = service.borrow_mut();
                             let res = service.call("".to_string());
-                            let res = format!("HTTP/1.1 200 OK\r\n\r\n{}", &res);
-                            stream.write(res.as_bytes()).unwrap();
+                            let response = format!("HTTP/1.1 200 OK\r\n\r\n{}", &res);
+                            stream.write(response.as_bytes()).unwrap();
                         }
                         None => {
                             let res = format!("HTTP/1.1 200 OK\r\n\r\nOops!");

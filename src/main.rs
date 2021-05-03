@@ -13,6 +13,7 @@ mod scope;
 mod resource;
 mod config;
 mod default;
+mod connection;
 
 use config::ServiceConfig;
 use app::App;
