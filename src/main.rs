@@ -14,6 +14,7 @@ mod resource;
 mod config;
 mod default;
 mod connection;
+mod response;
 
 use config::ServiceConfig;
 use app::App;

@@ -1,38 +1,27 @@
-use std::rc::Rc;
-use std::cell::RefCell;
 use std::net::TcpStream;
 use std::io::{Read, Write};
-use bytes::{Bytes, BytesMut, Buf, BufMut};
-use http::header;
 
 pub struct Connection {
-    stream: Rc<RefCell<TcpStream>>,
-    buffer: BytesMut,
+    stream: TcpStream,
 }
 
 impl Connection {
-    pub fn new(stream: Rc<RefCell<TcpStream>>) -> Self {
+    pub fn new(stream: TcpStream) -> Self {
         Self {
             stream,
-            buffer: BytesMut::with_capacity(2024),
         }
     }
 
-    pub fn build(&mut self) {
-        let mut buffer = [0; 1024];
-        let mut stream = self.stream.borrow_mut();
-        stream.read(&mut buffer[..]).unwrap();
+    pub fn read(&mut self, buffer: &mut [u8]) {
+        self.stream.read(buffer).unwrap();
+    }
 
-        let mut headers = [httparse::EMPTY_HEADER; 16];
-        let mut req = httparse::Request::new(&mut headers);
-        req.parse(&mut buffer).unwrap();
-        println!("{:?}", headers.clone());
-        self.buffer.put(&buffer[..]);
-        let res = format!("HTTP/1.1 200 OK\r\n\r\nHello World!");
+    pub fn write(&mut self, buffer: &str) {
+        self.stream.write(buffer.as_bytes()).unwrap();
+    }
 
-
-        stream.write(res.as_bytes()).unwrap();            
-        stream.flush().unwrap();
-        stream.shutdown(std::net::Shutdown::Both).unwrap();
+    pub fn close(&mut self) {
+        self.stream.flush().unwrap();
+        self.stream.shutdown(std::net::Shutdown::Both).unwrap();
     }
 }

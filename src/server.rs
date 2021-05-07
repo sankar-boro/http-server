@@ -1,13 +1,13 @@
 use std::{cell::{RefCell}, net::TcpStream, rc::Rc, sync::mpsc::Receiver};
-use crate::{App, app::AppServiceFactory, resource::ResourceService};
+use crate::{App, app::AppServiceFactory, connection::Connection, resource::ResourceService};
 use crate::builder::Builder;
-use loony_service::Service;
 use ahash::AHashMap;
-use std::io::{Read, Write};
+use crate::response::Response;
 
+static RES_OK: &str = "HTTP/1.1 200 OK\r\n\r\n";
+static RES_NF: &str = "HTTP/1.1 401 NOT FOUND\r\n\r\nNOT FOUND";
 
 pub type AppInstance = Box<dyn Fn() -> App + 'static>;
-
 pub struct HttpServer {
     app: AppInstance,
     builder: Builder,
@@ -42,36 +42,30 @@ impl HttpServer {
 
     fn accept(&self, receiver: Receiver<TcpStream>) {
         loop {
-            let mut stream = receiver.recv().unwrap();
-
             let mut buffer = [0; 1024];
-            stream.read(&mut buffer).unwrap();
+            let stream = receiver.recv().unwrap();
+            let mut conn = Connection::new(stream);
+            conn.read(&mut buffer);
+
             let mut headers = [httparse::EMPTY_HEADER; 16];
             let mut req = httparse::Request::new(&mut headers);
             req.parse(&buffer).unwrap();
-            match req.path {
-                Some(uri) => {
-                    let service = self.routes.get(uri);
-                    match service {
-                        Some(service) => {
-                            let mut service = service.borrow_mut();
-                            let res = service.call("".to_string());
-                            let response = format!("HTTP/1.1 200 OK\r\n\r\n{}", &res);
-                            stream.write(response.as_bytes()).unwrap();
-                        }
-                        None => {
-                            let res = format!("HTTP/1.1 200 OK\r\n\r\nOops!");
-                            stream.write(res.as_bytes()).unwrap();
-                        }
-                    }
+
+            let res = Response::new(&self.routes);
+            let r = res.build(&req);
+            match r {
+                Ok(r) => {
+                    let mut res = String::from("");
+                    res.push_str(RES_OK);
+                    res.push_str(&r);
+                    conn.write(&res);
                 }
-                None => {
-                    let res = format!("HTTP/1.1 200 OK\r\n\r\nOops!");
-                    stream.write(res.as_bytes()).unwrap();
+                Err(_) => {
+                    conn.write(RES_NF);
                 }
             }
-            stream.flush().unwrap();
-            stream.shutdown(std::net::Shutdown::Both).unwrap();
+
+            conn.close();
         }
     }
 }
