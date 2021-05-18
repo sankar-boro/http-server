@@ -21,6 +21,8 @@ use app::App;
 use server::HttpServer;
 use crate::responder::Responder;
 use std::fmt::{Error, Write};
+use scylla::{IntoTypedRows, Session, SessionBuilder};
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Request {
@@ -33,17 +35,15 @@ fn writer<W: Write>(f: &mut W, s: &str) -> Result<(), Error> {
     f.write_fmt(format_args!("{}", s))
 }
 
-async fn index(data: String) -> impl Responder {
-    let mut buf = String::new();
-    writer(&mut buf, &data).unwrap();
-    writer(&mut buf, "Hello World! ").unwrap();
-    buf
+async fn index(data: DB) -> impl Responder {
+    String::from("")
 }
 
 fn routes(config: &mut ServiceConfig) {
     config.service(
         web::scope("/user")
-        .route(route::get("/get").route(controller::get_user))
+        .route(route::get("/get/all").route(controller::get_user))
+        .route(route::get("/get/{userName}").route(controller::get_user))
         .route(route::post("/delete").route(controller::delete_user))
     );
 }
@@ -52,30 +52,48 @@ fn routes(config: &mut ServiceConfig) {
 struct AppState {
     name: String,
 }
+
+#[derive(Clone)]
+pub struct DB {
+    session: Arc<Session>,
+}
 pub trait FromRequest: Clone {
-  fn from_request(data: String) -> Self;
+  fn from_request(data: DB) -> Self;
 }
 
-impl FromRequest for String {
-    fn from_request(data: String) -> Self {
+impl FromRequest for DB {
+    fn from_request(data: DB) -> Self {
       data
     }
 }
 
-impl FromRequest for (String, ) {
-    fn from_request(data: String) -> Self {
+impl FromRequest for (DB, ) {
+    fn from_request(data: DB) -> Self {
       (data, )
     }
 }
 
 
-#[async_std::main]
+#[tokio::main]
 async fn main() {
+    let uri = std::env::var("SCYLLA_URI")
+        .unwrap_or_else(|_| "127.0.0.1:9042".to_string());
+
+    let session: Session = SessionBuilder::new()
+        .known_node(uri)
+        .build()
+        .await.unwrap();
+
+    let db = DB {
+        session: Arc::new(session),
+    };
+
     HttpServer::new(move ||
         App::new()
         .app_data( AppState {
             name: "Loony".to_owned(),
         })
+        .data(db.clone())
         .configure(routes)
         .route(web::get("/").route(index))
     )

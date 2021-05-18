@@ -1,4 +1,5 @@
 use crate::{
+  DB,
   resource::{
     ResourceService,
   },
@@ -10,7 +11,7 @@ use loony_service::ServiceFactory;
 
 type BoxedResourceServiceFactory = Box<
     dyn ServiceFactory<
-        Request = String, 
+        Request = DB, 
         Response = String, 
         Error = (), 
         Service = ResourceService

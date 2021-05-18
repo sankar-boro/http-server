@@ -1,3 +1,4 @@
+use crate::DB;
 use crate::route::Route;
 use loony_service::{ServiceFactory, Service};
 use crate::route::RouteService;
@@ -22,7 +23,7 @@ impl Resource {
 }
 
 impl ServiceFactory for Resource {
-    type Request = String;
+    type Request = DB;
     type Response = String;
     type Error = ();
     type Service = ResourceService;
@@ -32,8 +33,9 @@ impl ServiceFactory for Resource {
         path.push_str(&self.route.path);
         let route = self.route.new_service();
         ResourceService {
+          len: path.len() as u16,
           path,
-          route
+          route,
         }
     }
 }
@@ -41,10 +43,11 @@ impl ServiceFactory for Resource {
 pub struct ResourceService {
     pub route: RouteService,
     pub path: String,
+    pub len: u16,
 }
 
 impl Service for ResourceService {
-    type Request = String;
+    type Request = DB;
     type Response = String;
     type Error = ();
 

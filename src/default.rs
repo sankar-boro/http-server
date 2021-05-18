@@ -1,3 +1,4 @@
-pub async fn default(_: String) -> String {
+use crate::DB;
+pub async fn default(_: DB) -> String {
   String::from("Hello World!")
 }

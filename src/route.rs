@@ -8,6 +8,7 @@ use crate::{FromRequest};
 use crate::service::{Factory,Extract, RouteServiceFactory, Wrapper};
 use crate::responder::Responder;
 use crate::default::default;
+use crate::DB;
 
 #[derive(Clone)]
 pub enum Method {
@@ -17,7 +18,7 @@ pub enum Method {
 
 pub type BoxedRouteService = Box<
     dyn Service<
-        Request = String,
+        Request = DB,
         Response = String,
         Error = (),
     >,
@@ -25,7 +26,7 @@ pub type BoxedRouteService = Box<
 
 pub type BoxedRouteServiceFactory = Box<
     dyn ServiceFactory<
-            Request = String,
+            Request = DB,
             Response = String,
             Service = BoxedRouteService,
             Error = (),
@@ -66,7 +67,7 @@ impl<'route> Route {
     }
 }
 
-pub type BoxService = Box<dyn Service<Request = String, Response = String, Error = ()>>;
+pub type BoxService = Box<dyn Service<Request = DB, Response = String, Error = ()>>;
 
 pub struct RouteService {
     service: BoxService,
@@ -74,7 +75,7 @@ pub struct RouteService {
 }
 
 impl Service for RouteService {
-    type Request = String;
+    type Request = DB;
     type Response = String;
     type Error = ();
 
@@ -84,7 +85,7 @@ impl Service for RouteService {
 }
 
 impl ServiceFactory for Route {
-    type Request = String;
+    type Request = DB;
     type Response = String;
     type Error = ();
     type Service = RouteService;
@@ -115,14 +116,5 @@ mod tests {
     }
     #[test]
     fn route() {
-        let route = Route::new("/get");
-        let mut route_service = route.new_service();
-        let service = route_service.call("name".to_string());
-        assert_eq!("Hello World!", service);
-
-        let route = Route::new("/delete").route(index);
-        let mut route_service = route.new_service();
-        let service = route_service.call("name".to_string());
-        assert_eq!("name", service);
     }
 }

@@ -2,6 +2,7 @@ use async_std::task;
 use std::future::Future;
 use std::marker::PhantomData;
 
+use crate::DB;
 use crate::{FromRequest};
 use crate::responder::Responder;
 use crate::route::{BoxedRouteService};
@@ -65,7 +66,7 @@ struct RouteServiceWrapper<T: Service> {
 pub struct RouteServiceFactory<T>
 where
   T: ServiceFactory<
-    Request=String
+    Request=DB
   >,
   T::Service: 'static,
 {
@@ -144,7 +145,7 @@ where
             Response = String,
         > + Clone,
 {
-    type Request = String;
+    type Request = DB;
     type Response = String;
     type Error = ();
 
@@ -162,7 +163,7 @@ where S: Service<
           Response = String,
         > + Clone,
 {
-    type Request = String;
+    type Request = DB;
     type Response = String;
     type Service = ExtractService<Arg, S>;
     type Error = ();
@@ -179,11 +180,11 @@ where S: Service<
 impl<T> Service for RouteServiceWrapper<T>
 where
     T: Service<
-        Request = String,
+        Request = DB,
         Response = String,
     >,
 {
-    type Request = String;
+    type Request = DB;
     type Response = String;
     type Error = ();
 
@@ -194,7 +195,7 @@ where
 }
 
 // impl Service for BoxedRouteService {
-//     type Request = String;
+//     type Request = DB;
 //     type Response = String;
 //     type Error = ();
 
@@ -206,7 +207,7 @@ where
 impl<T> RouteServiceFactory<T>
 where
   T: ServiceFactory<
-    Request=String,
+    Request=DB,
     Response=String,
   >,
   T::Service: 'static,
@@ -222,12 +223,12 @@ where
 impl<T> ServiceFactory for RouteServiceFactory<T> 
 where 
   T: ServiceFactory<
-    Request=String,
+    Request=DB,
     Response=String,
   >,
   T::Service: Service + 'static,
 {
-    type Request = String;
+    type Request = DB;
 
     type Response = String;
 

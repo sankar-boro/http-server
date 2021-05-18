@@ -35,6 +35,11 @@ impl App {
         self
     }
 
+    pub fn data<U: 'static>(mut self, ext: U) -> Self {
+        self.extensions.insert(ext);
+        self
+    }
+
     pub fn route(mut self, route: Route) -> Self 
     {
         self.services.push(Box::new(Resource::new("".to_string()).route(route)));
@@ -70,12 +75,12 @@ impl AppServiceFactory for App {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::web;
+    use crate::{App, DB, web};
     use crate::controller;
     use crate::route::Route;
 
-    async fn index(req: String) -> String {
-        req
+    async fn index(req: DB) -> String {
+        String::from("")
     }
 
     #[test]

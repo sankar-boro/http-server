@@ -1,8 +1,10 @@
 use std::{cell::{RefCell}, net::TcpStream, rc::Rc, sync::mpsc::Receiver};
 use crate::{App, app::AppServiceFactory, connection::Connection, resource::ResourceService};
-use crate::builder::Builder;
 use ahash::AHashMap;
+use crate::DB;
+use crate::builder::Builder;
 use crate::response::Response;
+use crate::extensions::Extensions;
 
 static RES_OK: &str = "HTTP/1.1 200 OK\r\n\r\n";
 static RES_NF: &str = "HTTP/1.1 401 NOT FOUND\r\n\r\nNOT FOUND";
@@ -12,6 +14,7 @@ pub struct HttpServer {
     app: AppInstance,
     builder: Builder,
     routes: AHashMap<String, Rc<RefCell<ResourceService>>>,
+    extensions: Extensions,
 }
 
 impl HttpServer {
@@ -20,6 +23,7 @@ impl HttpServer {
             app: Box::new(app), 
             builder: Builder::new(),
             routes: AHashMap::new(),
+            extensions: Extensions::new(),
         }
     }
 
@@ -32,6 +36,7 @@ impl HttpServer {
                 self.routes.insert(factory.path.clone(), Rc::new(RefCell::new(factory)));
             }
         }
+        self.extensions = app.extensions;
     }
 
     pub fn run(&mut self) {
@@ -41,6 +46,7 @@ impl HttpServer {
     }
 
     fn accept(&self, receiver: Receiver<TcpStream>) {
+        let res = Response::new(&self.routes);
         loop {
             let mut buffer = [0; 1024];
             let stream = receiver.recv().unwrap();
@@ -50,18 +56,19 @@ impl HttpServer {
             let mut headers = [httparse::EMPTY_HEADER; 16];
             let mut req = httparse::Request::new(&mut headers);
             req.parse(&buffer).unwrap();
-
-            let res = Response::new(&self.routes);
-            let r = res.build(&req);
-            match r {
-                Ok(r) => {
-                    let mut res = String::from("");
-                    res.push_str(RES_OK);
-                    res.push_str(&r);
-                    conn.write(&res);
-                }
-                Err(_) => {
-                    conn.write(RES_NF);
+            let db = self.extensions.get::<DB>();
+            if let Some(db) = db {
+                let r = res.build(&req, db.clone());
+                match r {
+                    Ok(r) => {
+                        let mut res = String::from("");
+                        res.push_str(RES_OK);
+                        res.push_str(&r);
+                        conn.write(&res);
+                    }
+                    Err(_) => {
+                        conn.write(RES_NF);
+                    }
                 }
             }
 

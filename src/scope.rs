@@ -1,10 +1,11 @@
+use crate::DB;
 use crate::route::{Route};
-use crate::resource::{Resource, ResourceService};
 use loony_service::{ServiceFactory};
+use crate::resource::{Resource, ResourceService};
 
 pub type BoxedResourceServiceFactory = Box<
     dyn ServiceFactory<
-        Request = String, 
+        Request = DB, 
         Response = String, 
         Error = (), 
         Service = ResourceService
