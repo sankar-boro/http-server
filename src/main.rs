@@ -15,6 +15,7 @@ mod config;
 mod default;
 mod connection;
 mod response;
+mod request;
 
 use config::ServiceConfig;
 use app::App;
@@ -45,6 +46,12 @@ fn routes(config: &mut ServiceConfig) {
         .route(route::get("/get/all").route(controller::get_user))
         .route(route::get("/get/{userName}").route(controller::get_user))
         .route(route::post("/delete").route(controller::delete_user))
+    );
+
+    config.service(
+        web::scope("/test")
+        .route(route::get("/scylla").route(controller::get_user))
+        .route(route::post("/scylla/post").route(controller::get_user))
     );
 }
 

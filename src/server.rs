@@ -5,6 +5,7 @@ use crate::DB;
 use crate::builder::Builder;
 use crate::response::Response;
 use crate::extensions::Extensions;
+use crate::request::{Header, EMPTY_HEADER, Request};
 
 static RES_OK: &str = "HTTP/1.1 200 OK\r\n\r\n";
 static RES_NF: &str = "HTTP/1.1 401 NOT FOUND\r\n\r\nNOT FOUND";
@@ -52,10 +53,11 @@ impl HttpServer {
             let stream = receiver.recv().unwrap();
             let mut conn = Connection::new(stream);
             conn.read(&mut buffer);
+            println!("{}", String::from_utf8_lossy(&buffer));
+            let mut headers = [EMPTY_HEADER; 16];
+            let mut req = Request::new(&mut headers);
+            req.parse(&buffer);
 
-            let mut headers = [httparse::EMPTY_HEADER; 16];
-            let mut req = httparse::Request::new(&mut headers);
-            req.parse(&buffer).unwrap();
             let db = self.extensions.get::<DB>();
             if let Some(db) = db {
                 let r = res.build(&req, db.clone());
@@ -73,6 +75,9 @@ impl HttpServer {
             }
 
             conn.close();
+            for h in headers.iter() {
+                println!("{:?}", h);
+            }
         }
     }
 }
