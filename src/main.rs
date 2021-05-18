@@ -35,8 +35,8 @@ fn writer<W: Write>(f: &mut W, s: &str) -> Result<(), Error> {
     f.write_fmt(format_args!("{}", s))
 }
 
-async fn index(data: DB) -> impl Responder {
-    String::from("")
+async fn index() -> impl Responder {
+    String::from("Hello World")
 }
 
 fn routes(config: &mut ServiceConfig) {
@@ -70,6 +70,12 @@ impl FromRequest for DB {
 impl FromRequest for (DB, ) {
     fn from_request(data: DB) -> Self {
       (data, )
+    }
+}
+
+impl FromRequest for () {
+    fn from_request(_: DB) -> Self {
+      ()
     }
 }
 

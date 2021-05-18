@@ -27,6 +27,17 @@ where
   }
 }
 
+impl<T, Res, O> Factory<(), Res, O> for T 
+where 
+  T: Fn() -> Res + Clone + 'static, 
+  Res: Future<Output=O>,
+  O: Responder,
+{
+  fn factory_call(&self, _: ()) -> Res {
+    (self)()
+  }
+}
+
 impl<T, A, B, Res, O> Factory<(A,B,), Res, O> for T 
 where 
   T: Fn(A, B,) -> Res + Clone + 'static, 
