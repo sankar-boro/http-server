@@ -1,35 +1,42 @@
 use std::slice::Iter;
 
-static data: &'static [u8; 20] = b"GET /home HTTP/1.1\r\n";
-enum RType {
-    Method,
-    Uri,
-}
+static DATA: &'static [u8; 20] = b"GET /home HTTP/1.1\r\n";
+
 fn main() {
-    let buffer = data.clone();
-    let mut buffer = buffer.iter();
-    let mut index: usize = 0;
-    let method = get_method(&mut buffer, &mut index);
-    index += 1;
-    let uri = get_uri(&mut buffer, &mut index);
-    index += 1;
-    let version = get_version(&mut buffer, &mut index);
-    println!("{:?}", method);
-    println!("{:?}", uri);
-    println!("{:?}", version);
+    let buffer = DATA.clone();
+    let buffer_ref = &buffer;
+    let mut iter_buffer = buffer_ref.iter();
+
+    let mut index:usize = 0;
+
+    let method = head(&mut iter_buffer, &mut index);
+    let uri = head(&mut iter_buffer, &mut index);
+    let version = get_version(&mut iter_buffer, &mut index);
+
+    if let Some((mh, mt)) = method {
+        println!("{}", String::from_utf8_lossy(&buffer_ref[mh..mt]).to_string());
+    }
+    if let Some((uh, ut)) = uri {
+        println!("{}", String::from_utf8_lossy(&buffer_ref[uh..ut]).to_string());
+    }
+    if let Some((vh, vt)) = version {
+        println!("{}", String::from_utf8_lossy(&buffer_ref[vh..vt]).to_string());
+    }
 }
 
-fn get_method(buffer: &mut Iter<u8>, index:&mut usize) -> Option<String> {
-    let mut pointer= index.clone();
+fn head(buffer: &mut Iter<u8>, index: &mut usize) -> Option<(usize, usize)> {
+    let mut count: usize = 0;
+    let start = *index;
+
     loop {
         match buffer.next() {
             Some(b) => {
                 if *b == b' ' {
-                    let rdata = Some(String::from_utf8_lossy(&data[*index..pointer]).to_string());
-                    *index = pointer;
-                    return rdata;
+                    let rd = (start, start + count);
+                    *index = start + count + 1;
+                    return Some(rd);
                 }
-                pointer += 1;
+                count += 1;
             }
             None => {
                 return None;
@@ -38,36 +45,19 @@ fn get_method(buffer: &mut Iter<u8>, index:&mut usize) -> Option<String> {
     }
 }
 
-fn get_uri(buffer: &mut Iter<u8>, index:&mut usize) -> Option<String> {
-    let mut pointer= index.clone();
-    loop {
-        match buffer.next() {
-            Some(b) => {
-                if *b == b' ' {
-                    let rdata = Some(String::from_utf8_lossy(&data[*index..pointer]).to_string());
-                    *index = pointer;
-                    return rdata;
-                }
-                pointer += 1;
-            }
-            None => {
-                return None;
-            }
-        }
-    }
-}
+fn get_version(buffer: &mut Iter<u8>, index: &mut usize) -> Option<(usize, usize)> {
+    let mut count: usize = 0;
+    let start = *index;
 
-fn get_version(buffer: &mut Iter<u8>, index:&mut usize) -> Option<String> {
-    let mut pointer= index.clone();
     loop {
         match buffer.next() {
             Some(b) => {
-                if *b == b'\r' {
-                    let rdata = Some(String::from_utf8_lossy(&data[*index..pointer]).to_string());
-                    *index = pointer;
-                    return rdata;
+                if *b == b'\n' {
+                    let rd = (start, start + count);
+                    *index = start + count + 1;
+                    return Some(rd);
                 }
-                pointer += 1;
+                count += 1;
             }
             None => {
                 return None;
