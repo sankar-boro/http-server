@@ -6,7 +6,7 @@ use pin_project::pin_project;
 
 pub trait Responder {
     type Future: Future<Output=String>;
-    fn respond(&self) -> String;
+    fn respond(&self, req: &String) -> Self::Future;
 }
 // ******************************************************************************
 pub trait Factory<P, R, O>: Clone + 'static {
@@ -45,7 +45,7 @@ where
     R: Future<Output=O>,
     O: Responder,
 {
-    type Request = P;
+    type Request = (P, String);
 
     type Response = String;
 
@@ -53,12 +53,13 @@ where
 
     type Future = HandlerServiceResponse<R, O>;
 
-    fn call(&mut self, req: Self::Request) -> Self::Future {
+    fn call(&mut self, (param, req): (P, String)) -> Self::Future {
         let a = &self.factory;
-        let b = a.call(req);
+        let b = a.call(param);
         HandlerServiceResponse {
             fut: b,
-            fut2: None
+            fut2: None,
+            req: Some(req),
         }
     }
 }
@@ -72,7 +73,8 @@ where
     #[pin]
     fut: R,
     #[pin]
-    fut2: Option<O::Future>
+    fut2: Option<O::Future>,
+    req: Option<String>
 }
 impl<R, O> Future for HandlerServiceResponse<R, O> 
 where 
@@ -91,10 +93,14 @@ O: Responder,
                 Poll::Pending => Poll::Pending,
             };
         }
+        // todo!()
         match this.fut.poll(cx) {
             Poll::Ready(res) => {
-                let a = res.respond();
-                Poll::Ready(Ok(a))
+                // let a = res.respond();
+                // Poll::Ready(Ok(a))
+                let fut = res.respond(this.req.as_ref().unwrap());
+                self.as_mut().project().fut2.set(Some(fut));
+                self.poll(cx)
             },
             Poll::Pending => Poll::Pending,
         }
