@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 mio = {version ="0.7", features= ["os-poll", "net"]}
 fxhash = "0.2.1"
+pin-project = "1.0.1"
 
 [dependencies.async-std]
 version = "1.7.0"

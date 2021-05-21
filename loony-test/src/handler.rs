@@ -2,8 +2,12 @@ use std::{future::ready, pin::Pin, task::Poll};
 use std::future::Future;
 use std::marker::PhantomData;
 use crate::service::{Service, ServiceFactory};
+use pin_project::pin_project;
 
-pub trait Responder {}
+pub trait Responder {
+    type Future: Future<Output=String>;
+    fn respond(&self) -> String;
+}
 // ******************************************************************************
 pub trait Factory<P, R, O>: Clone + 'static {
     fn call(&self, param: P) -> R;
@@ -22,11 +26,79 @@ where
 // ******************************************************************************
 
 struct Handler<T, P, R, O> 
-where 
-    T: Factory<P, R, O>
 {
     factory: T, 
     _t: PhantomData<(P, R, O)>
+}
+impl<T, P, R, O> Handler<T, P, R, O> {
+    fn new(factory: T) -> Self {
+        Handler {
+            factory,
+            _t: PhantomData,
+        }
+    }
+}
+
+impl<T, P, R, O> Service for Handler<T, P, R, O> 
+where 
+    T: Factory<P, R, O>,
+    R: Future<Output=O>,
+    O: Responder,
+{
+    type Request = P;
+
+    type Response = String;
+
+    type Error = ();
+
+    type Future = HandlerServiceResponse<R, O>;
+
+    fn call(&mut self, req: Self::Request) -> Self::Future {
+        let a = &self.factory;
+        let b = a.call(req);
+        HandlerServiceResponse {
+            fut: b,
+            fut2: None
+        }
+    }
+}
+// ******************************************************************************
+#[pin_project]
+struct HandlerServiceResponse<R, O> 
+where
+    R: Future<Output = O>,
+    O: Responder
+{
+    #[pin]
+    fut: R,
+    #[pin]
+    fut2: Option<O::Future>
+}
+impl<R, O> Future for HandlerServiceResponse<R, O> 
+where 
+R: Future<Output = O>,
+O: Responder,
+{
+    type Output = Result<String, ()>;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
+        let this = self.as_mut().project();
+        if let Some(fut) = this.fut2.as_pin_mut() {
+            return match fut.poll(cx) {
+                Poll::Ready(res) => {
+                    Poll::Ready(Ok(res))
+                }
+                Poll::Pending => Poll::Pending,
+            };
+        }
+        match this.fut.poll(cx) {
+            Poll::Ready(res) => {
+                let a = res.respond();
+                Poll::Ready(Ok(a))
+            },
+            Poll::Pending => Poll::Pending,
+        }
+    }
 }
 // ******************************************************************************
 type BoxedRouteService = Box<

@@ -759,6 +759,7 @@ dependencies = [
  "async-std",
  "fxhash",
  "mio",
+ "pin-project",
 ]
 
 [[package]]
