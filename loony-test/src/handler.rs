@@ -1,8 +1,21 @@
-use std::{future::ready, pin::Pin, task::Poll};
+use std::{future::{Ready, ready,}, pin::Pin, task::Poll};
 use std::future::Future;
 use std::marker::PhantomData;
 use crate::service::{Service, ServiceFactory};
 use pin_project::pin_project;
+
+pub trait FromRequest {
+    // type Future;
+    fn from_request(param: &String) -> Self;
+}
+
+impl FromRequest for String {
+    // type Future = String;
+
+    fn from_request(param: &String) -> Self {
+        param.clone()
+    }
+}
 
 pub trait Responder {
     type Future: Future<Output=String>;
@@ -16,6 +29,7 @@ pub trait Factory<P, R, O>: Clone + 'static {
 impl<T, P, R, O> Factory<P, R, O> for T 
 where
     T: Fn(P) -> R + Clone + 'static,
+    P: FromRequest,
     R: Future<Output=O>,
     O: Responder 
 {
@@ -93,11 +107,8 @@ O: Responder,
                 Poll::Pending => Poll::Pending,
             };
         }
-        // todo!()
         match this.fut.poll(cx) {
             Poll::Ready(res) => {
-                // let a = res.respond();
-                // Poll::Ready(Ok(a))
                 let fut = res.respond(this.req.as_ref().unwrap());
                 self.as_mut().project().fut2.set(Some(fut));
                 self.poll(cx)
@@ -151,3 +162,107 @@ impl ServiceFactory for RouteHandlerServiceFactory {
     }
 }
 // ******************************************************************************
+struct Extract<T: FromRequest, S> {
+    service: S,
+    _t: PhantomData<T>
+}
+
+impl<T: FromRequest + Clone, S> ServiceFactory for Extract<T, S>
+where 
+    S: Service<
+        Request=(T, String),
+        Response=String,
+        Error=()
+    > + Clone
+{
+    type Request = String;
+
+    type Response = String;
+
+    type Error = ();
+
+    type Config = ();
+
+    type Service = ExtractService<T, S>;
+
+    type InitError = ();
+
+    type Future = Ready<Result<Self::Service, ()>>;
+
+    fn new_service(&self, _: Self::Config) -> Self::Future {
+        let a= ExtractService {
+            service: self.service.clone(),
+            _t: PhantomData,
+        };
+        ready(Ok(a))
+    }
+}
+// ******************************************************************************
+struct ExtractService<T, S> {
+    service: S,
+    _t: PhantomData<T>
+}
+
+impl<T: FromRequest + Clone, S> Service for ExtractService<T, S> 
+where 
+    S: Service<
+        Request=(T, String),
+        Response=String,
+        Error=()
+    > + Clone
+{
+    type Request = String;
+
+    type Response = String;
+
+    type Error = ();
+
+    type Future = ExtractResponse<T, S>;
+
+    fn call(&mut self, req: Self::Request) -> Self::Future {
+        let a = "".to_string();
+        ExtractResponse {
+            req,
+            service: self.service.clone(),
+            fut: T::from_request(&a),
+            fut_s: None,
+        }
+    }
+}
+// ******************************************************************************
+#[pin_project]
+struct ExtractResponse <T: FromRequest, S: Service> {
+    req: String,
+    service: S,
+    fut: T,
+    #[pin]
+    fut_s: Option<S::Future>,
+}
+
+impl<T: FromRequest + Clone, S: Service> Future for ExtractResponse<T, S> 
+where
+    S: Service<
+        Request = (T, String),
+        Response = String,
+        Error=()
+    >,
+{
+    type Output = Result<String, ()>;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
+        let this = self.as_mut().project();
+        if let Some(fut) = this.fut_s.as_pin_mut() {
+            return match fut.poll(cx) {
+                Poll::Ready(res) => {
+                    Poll::Ready(res)
+                }
+                Poll::Pending => Poll::Pending,
+            };
+        }
+
+        let a = this.fut.clone();
+        let b = this.service.call((a, this.req.clone()));
+        self.as_mut().project().fut_s.set(Some(b));
+        self.poll(cx)
+    }
+}
