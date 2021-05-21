@@ -4,7 +4,7 @@ use std::marker::PhantomData;
 use crate::service::{Service, ServiceFactory};
 use pin_project::pin_project;
 
-pub trait FromRequest {
+pub trait FromRequest: Clone {
     // type Future;
     fn from_request(param: &String) -> Self;
 }
@@ -21,8 +21,20 @@ pub trait Responder {
     type Future: Future<Output=String>;
     fn respond(&self, req: &String) -> Self::Future;
 }
+
+impl Responder for String {
+    type Future = Ready<String>;
+
+    fn respond(&self, req: &String) -> Self::Future {
+        ready(req.clone())
+    }
+}
 // ******************************************************************************
-pub trait Factory<P, R, O>: Clone + 'static {
+pub trait Factory<P, R, O>: Clone + 'static 
+where 
+    R: Future<Output=O>, 
+    O: Responder,
+{
     fn call(&self, param: P) -> R;
 }
 
@@ -39,15 +51,39 @@ where
 }
 // ******************************************************************************
 
-struct Handler<T, P, R, O> 
+pub struct Handler<T, P, R, O> 
+where
+    T: Factory<P, R, O>,
+    R: Future<Output=O>,
+    O: Responder,
 {
     factory: T, 
     _t: PhantomData<(P, R, O)>
 }
-impl<T, P, R, O> Handler<T, P, R, O> {
-    fn new(factory: T) -> Self {
+
+impl<T, P, R, O> Handler<T, P, R, O> 
+where
+    T: Factory<P, R, O>,
+    R: Future<Output=O>,
+    O: Responder,
+{
+    pub fn new(factory: T) -> Self {
         Handler {
             factory,
+            _t: PhantomData,
+        }
+    }
+}
+
+impl<T, P, R, O> Clone for Handler<T, P, R, O> 
+where
+    T: Factory<P, R, O>,
+    R: Future<Output=O>,
+    O: Responder,
+{
+    fn clone(&self) -> Self {
+        Handler {
+            factory: self.factory.clone(),
             _t: PhantomData,
         }
     }
@@ -79,7 +115,7 @@ where
 }
 // ******************************************************************************
 #[pin_project]
-struct HandlerServiceResponse<R, O> 
+pub struct HandlerServiceResponse<R, O> 
 where
     R: Future<Output = O>,
     O: Responder
@@ -92,8 +128,8 @@ where
 }
 impl<R, O> Future for HandlerServiceResponse<R, O> 
 where 
-R: Future<Output = O>,
-O: Responder,
+    R: Future<Output = O>,
+    O: Responder,
 {
     type Output = Result<String, ()>;
 
@@ -118,7 +154,7 @@ O: Responder,
     }
 }
 // ******************************************************************************
-type BoxedRouteService = Box<
+pub type BoxedRouteService = Box<
     dyn Service<
         Request=String,
         Response=String,
@@ -126,9 +162,24 @@ type BoxedRouteService = Box<
         Future=Pin<Box<dyn Future<Output=Result<String, ()>>>>
     >
 >;
+
+pub type BoxedRouteServiceFactory = Box<
+    dyn ServiceFactory<
+        Request=String,
+        Response=String,
+        Error=(),
+        Service=BoxedRouteService,
+        Future=Pin<Box<dyn Future<Output=Result<BoxedRouteService, ()>>>>,
+        Config=(),
+        InitError=()
+    >
+>;
 // ******************************************************************************
-struct RouteHandlerService {}
-impl Service for RouteHandlerService {
+struct RouteHandlerService<T> {
+    factory:T 
+}
+
+impl<T> Service for RouteHandlerService<T> {
     type Request = String;
     type Response = String;
     type Error = ();
@@ -143,8 +194,36 @@ impl Service for RouteHandlerService {
     }
 }
 // ******************************************************************************
-struct RouteHandlerServiceFactory {}
-impl ServiceFactory for RouteHandlerServiceFactory {
+pub struct RouteHandlerServiceFactory<T> 
+where
+    T: ServiceFactory<Request = String>
+{
+    factory: T,
+}
+
+impl<T> RouteHandlerServiceFactory<T> 
+where
+    T: ServiceFactory<Request = String>
+{
+    pub fn new(factory: T) -> Self {
+        RouteHandlerServiceFactory {
+            factory,
+        }
+    }
+}
+// ******************************************************************************
+impl<T> ServiceFactory for RouteHandlerServiceFactory<T> 
+where
+    T: ServiceFactory<
+        Config = (),
+        Request = String,
+        Response = String,
+        Error = (),
+    >,
+    T::Future: 'static,
+    T::Service: 'static,
+    <T::Service as Service>::Future: 'static,
+{
     type Request = String;
     type Response = String;
     type Config = ();
@@ -154,7 +233,10 @@ impl ServiceFactory for RouteHandlerServiceFactory {
     type Future = Pin<Box<dyn Future<Output=Result<BoxedRouteService, ()>>>>;
 
     fn new_service(&self, _: Self::Config) -> Self::Future {
-        let a: BoxedRouteService = Box::new(RouteHandlerService {});
+        let s = self.factory.new_service(());
+        let a: BoxedRouteService = Box::new(RouteHandlerService {
+            factory: s,
+        });
         let b = Ok(a);
         let c = ready(b);
         let d = Box::pin(c);
@@ -162,12 +244,21 @@ impl ServiceFactory for RouteHandlerServiceFactory {
     }
 }
 // ******************************************************************************
-struct Extract<T: FromRequest, S> {
+pub struct Extract<T: FromRequest, S> {
     service: S,
     _t: PhantomData<T>
 }
 
-impl<T: FromRequest + Clone, S> ServiceFactory for Extract<T, S>
+impl<T: FromRequest, S> Extract<T, S> {
+    pub fn new(service: S) -> Self {
+        Extract {
+            service,
+            _t: PhantomData,
+        }
+    }
+}
+
+impl<T: FromRequest, S> ServiceFactory for Extract<T, S>
 where 
     S: Service<
         Request=(T, String),
@@ -198,12 +289,12 @@ where
     }
 }
 // ******************************************************************************
-struct ExtractService<T, S> {
+pub struct ExtractService<T, S> {
     service: S,
     _t: PhantomData<T>
 }
 
-impl<T: FromRequest + Clone, S> Service for ExtractService<T, S> 
+impl<T: FromRequest, S> Service for ExtractService<T, S> 
 where 
     S: Service<
         Request=(T, String),
@@ -231,7 +322,7 @@ where
 }
 // ******************************************************************************
 #[pin_project]
-struct ExtractResponse <T: FromRequest, S: Service> {
+pub struct ExtractResponse <T: FromRequest, S: Service> {
     req: String,
     service: S,
     fut: T,
@@ -239,7 +330,7 @@ struct ExtractResponse <T: FromRequest, S: Service> {
     fut_s: Option<S::Future>,
 }
 
-impl<T: FromRequest + Clone, S: Service> Future for ExtractResponse<T, S> 
+impl<T: FromRequest, S: Service> Future for ExtractResponse<T, S> 
 where
     S: Service<
         Request = (T, String),

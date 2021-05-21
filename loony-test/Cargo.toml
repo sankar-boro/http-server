@@ -11,6 +11,7 @@ mio = {version ="0.7", features= ["os-poll", "net"]}
 fxhash = "0.2.1"
 pin-project = "1.0.1"
 futures-util = "0.3.15"
+tokio = { version = "1.1.0", features = ["full"] }
 
 [dependencies.async-std]
 version = "1.7.0"
