@@ -1,21 +1,22 @@
-use std::{future::{Ready, ready,}, pin::Pin, task::Poll};
+use std::{future::{Ready, ready}, pin::Pin, task::Poll};
 use std::future::Future;
 use std::marker::PhantomData;
 use crate::service::{Service, ServiceFactory};
 use async_std::task::block_on;
-use futures_util::FutureExt;
+use futures_util::{FutureExt, ready as _ready};
 use pin_project::pin_project;
 
+
 pub trait FromRequest: Clone {
-    // type Future;
-    fn from_request(req: &String) -> Self;
+    type Future: Future<Output=Result<Self, ()>>;
+    fn from_request(req: &String) -> Self::Future;
 }
 
 impl FromRequest for String {
-    // type Future = String;
+    type Future = Ready<Result<String, ()>>;
 
-    fn from_request(req: &String) -> Self {
-        req.clone()
+    fn from_request(req: &String) -> Self::Future {
+        ready(Ok(req.clone()))
     }
 }
 
@@ -28,8 +29,6 @@ impl Responder for String {
     type Future = Ready<String>;
 
     fn respond(&self, _: &String) -> Self::Future {
-        // println!("respond: {}", req);
-        // println!("respond: {}", self);
         ready(self.clone())
     }
 }
@@ -338,7 +337,8 @@ where
 pub struct ExtractResponse <T: FromRequest, S: Service> {
     req: String,
     service: S,
-    fut: T,
+    #[pin]
+    fut: T::Future,
     #[pin]
     fut_s: Option<S::Future>,
 }
@@ -364,9 +364,15 @@ where
             };
         }
 
-        let a = this.fut.clone();
-        let b = this.service.call((a, this.req.clone()));
-        self.as_mut().project().fut_s.set(Some(b));
-        self.poll(cx)
+        match _ready!(this.fut.poll(cx)) {
+            Err(_) => {
+                Poll::Ready(Err(()))
+            }
+            Ok(data) => {
+                let l = this.service.call((data, this.req.clone()));
+                self.as_mut().project().fut_s.set(Some(l));
+                self.poll(cx)
+            }
+        }
     }
 }
