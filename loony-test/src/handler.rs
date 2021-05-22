@@ -2,18 +2,20 @@ use std::{future::{Ready, ready,}, pin::Pin, task::Poll};
 use std::future::Future;
 use std::marker::PhantomData;
 use crate::service::{Service, ServiceFactory};
+use async_std::task::block_on;
+use futures_util::FutureExt;
 use pin_project::pin_project;
 
 pub trait FromRequest: Clone {
     // type Future;
-    fn from_request(param: &String) -> Self;
+    fn from_request(req: &String) -> Self;
 }
 
 impl FromRequest for String {
     // type Future = String;
 
-    fn from_request(param: &String) -> Self {
-        param.clone()
+    fn from_request(req: &String) -> Self {
+        req.clone()
     }
 }
 
@@ -25,8 +27,10 @@ pub trait Responder {
 impl Responder for String {
     type Future = Ready<String>;
 
-    fn respond(&self, req: &String) -> Self::Future {
-        ready(req.clone())
+    fn respond(&self, _: &String) -> Self::Future {
+        // println!("respond: {}", req);
+        // println!("respond: {}", self);
+        ready(self.clone())
     }
 }
 // ******************************************************************************
@@ -175,19 +179,27 @@ pub type BoxedRouteServiceFactory = Box<
     >
 >;
 // ******************************************************************************
-struct RouteHandlerService<T> {
+struct RouteHandlerService<T: Service> {
     factory:T 
 }
 
-impl<T> Service for RouteHandlerService<T> {
+impl<T> Service for RouteHandlerService<T> 
+where
+    T::Future: 'static,
+    T: Service<
+        Request = String,
+        Response = String,
+        Error = (),
+    >,
+{
     type Request = String;
     type Response = String;
     type Error = ();
     type Future = Pin<Box<dyn Future<Output=Result<String, ()>>>>;
 
     fn call(&mut self, req: Self::Request) -> Self::Future {
-        let a = req;
-        let b = Ok(a);
+        let a = &mut self.factory;
+        let b = block_on(a.call(req));
         let c = ready(b);
         let d = Box::pin(c);
         d
@@ -218,7 +230,7 @@ where
         Config = (),
         Request = String,
         Response = String,
-        Error = (),
+        Error = ()
     >,
     T::Future: 'static,
     T::Service: 'static,
@@ -230,17 +242,19 @@ where
     type Error = ();
     type InitError = ();
     type Service = BoxedRouteService;
-    type Future = Pin<Box<dyn Future<Output=Result<BoxedRouteService, ()>>>>;
+    type Future = Pin<Box<dyn Future<Output=Result<Self::Service, ()>>>>;
 
     fn new_service(&self, _: Self::Config) -> Self::Future {
-        let s = self.factory.new_service(());
-        let a: BoxedRouteService = Box::new(RouteHandlerService {
-            factory: s,
-        });
-        let b = Ok(a);
-        let c = ready(b);
-        let d = Box::pin(c);
-        d
+        let s = self.factory.new_service(())
+        .map(|result| match result {
+            Ok(res) => {
+                let service: BoxedRouteService =
+                        Box::new(RouteHandlerService { factory: res });
+                    Ok(service)
+            }
+            Err(_) => Err(()),
+        }).boxed_local();
+        s
     }
 }
 // ******************************************************************************
@@ -311,11 +325,10 @@ where
     type Future = ExtractResponse<T, S>;
 
     fn call(&mut self, req: Self::Request) -> Self::Future {
-        let a = "".to_string();
         ExtractResponse {
-            req,
+            req: req.clone(),
             service: self.service.clone(),
-            fut: T::from_request(&a),
+            fut: T::from_request(&req),
             fut_s: None,
         }
     }

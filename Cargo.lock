@@ -760,6 +760,7 @@ dependencies = [
  "fxhash",
  "mio",
  "pin-project",
+ "tokio",
 ]
 
 [[package]]

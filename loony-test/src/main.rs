@@ -31,7 +31,7 @@ impl Routes {
 }
 
 async fn index(param: String) -> String {
-    let mut data = String::new();
+    let mut data = String::from("");
     data.push_str("Hello ");
     data.push_str(&param);
     data
