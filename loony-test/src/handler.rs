@@ -1,37 +1,16 @@
-use std::{future::{Ready, ready}, pin::Pin, task::Poll};
 use std::future::Future;
 use std::marker::PhantomData;
-use crate::service::{Service, ServiceFactory};
+use pin_project::pin_project;
 use async_std::task::block_on;
 use futures_util::{FutureExt, ready as _ready};
-use pin_project::pin_project;
+use std::{future::{Ready, ready}, pin::Pin, task::Poll};
 
+use crate::responder::Responder;
+use crate::extract::FromRequest;
+use crate::route::BoxedRouteService;
+use crate::service::{ServiceRequest, ServiceResponse};
+use loony_service::{Service, ServiceFactory};
 
-pub trait FromRequest: Clone {
-    type Future: Future<Output=Result<Self, ()>>;
-    fn from_request(req: &String) -> Self::Future;
-}
-
-impl FromRequest for String {
-    type Future = Ready<Result<String, ()>>;
-
-    fn from_request(req: &String) -> Self::Future {
-        ready(Ok(req.clone()))
-    }
-}
-
-pub trait Responder {
-    type Future: Future<Output=String>;
-    fn respond(&self, req: &String) -> Self::Future;
-}
-
-impl Responder for String {
-    type Future = Ready<String>;
-
-    fn respond(&self, _: &String) -> Self::Future {
-        ready(self.clone())
-    }
-}
 // ******************************************************************************
 pub trait Factory<P, R, O>: Clone + 'static 
 where 
@@ -98,15 +77,12 @@ where
     R: Future<Output=O>,
     O: Responder,
 {
-    type Request = (P, String);
-
-    type Response = String;
-
+    type Request = (P, ServiceRequest);
+    type Response = ServiceResponse;
     type Error = ();
-
     type Future = HandlerServiceResponse<R, O>;
 
-    fn call(&mut self, (param, req): (P, String)) -> Self::Future {
+    fn call(&mut self, (param, req): (P, ServiceRequest)) -> Self::Future {
         let a = &self.factory;
         let b = a.call(param);
         HandlerServiceResponse {
@@ -127,14 +103,14 @@ where
     fut: R,
     #[pin]
     fut2: Option<O::Future>,
-    req: Option<String>
+    req: Option<ServiceRequest>
 }
 impl<R, O> Future for HandlerServiceResponse<R, O> 
 where 
     R: Future<Output = O>,
     O: Responder,
 {
-    type Output = Result<String, ()>;
+    type Output = Result<ServiceResponse, ()>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
         let this = self.as_mut().project();
@@ -157,27 +133,6 @@ where
     }
 }
 // ******************************************************************************
-pub type BoxedRouteService = Box<
-    dyn Service<
-        Request=String,
-        Response=String,
-        Error=(),
-        Future=Pin<Box<dyn Future<Output=Result<String, ()>>>>
-    >
->;
-
-pub type BoxedRouteServiceFactory = Box<
-    dyn ServiceFactory<
-        Request=String,
-        Response=String,
-        Error=(),
-        Service=BoxedRouteService,
-        Future=Pin<Box<dyn Future<Output=Result<BoxedRouteService, ()>>>>,
-        Config=(),
-        InitError=()
-    >
->;
-// ******************************************************************************
 struct RouteHandlerService<T: Service> {
     factory:T 
 }
@@ -186,15 +141,15 @@ impl<T> Service for RouteHandlerService<T>
 where
     T::Future: 'static,
     T: Service<
-        Request = String,
-        Response = String,
+        Request = ServiceRequest,
+        Response = ServiceResponse,
         Error = (),
     >,
 {
-    type Request = String;
-    type Response = String;
+    type Request = ServiceRequest;
+    type Response = ServiceResponse;
     type Error = ();
-    type Future = Pin<Box<dyn Future<Output=Result<String, ()>>>>;
+    type Future = Pin<Box<dyn Future<Output=Result<ServiceResponse, ()>>>>;
 
     fn call(&mut self, req: Self::Request) -> Self::Future {
         let a = &mut self.factory;
@@ -207,14 +162,14 @@ where
 // ******************************************************************************
 pub struct RouteHandlerServiceFactory<T> 
 where
-    T: ServiceFactory<Request = String>
+    T: ServiceFactory<Request = ServiceRequest>
 {
     factory: T,
 }
 
 impl<T> RouteHandlerServiceFactory<T> 
 where
-    T: ServiceFactory<Request = String>
+    T: ServiceFactory<Request = ServiceRequest>
 {
     pub fn new(factory: T) -> Self {
         RouteHandlerServiceFactory {
@@ -227,16 +182,16 @@ impl<T> ServiceFactory for RouteHandlerServiceFactory<T>
 where
     T: ServiceFactory<
         Config = (),
-        Request = String,
-        Response = String,
+        Request = ServiceRequest,
+        Response = ServiceResponse,
         Error = ()
     >,
     T::Future: 'static,
     T::Service: 'static,
     <T::Service as Service>::Future: 'static,
 {
-    type Request = String;
-    type Response = String;
+    type Request = ServiceRequest;
+    type Response = ServiceResponse;
     type Config = ();
     type Error = ();
     type InitError = ();
@@ -274,23 +229,17 @@ impl<T: FromRequest, S> Extract<T, S> {
 impl<T: FromRequest, S> ServiceFactory for Extract<T, S>
 where 
     S: Service<
-        Request=(T, String),
-        Response=String,
+        Request=(T, ServiceRequest),
+        Response=ServiceResponse,
         Error=()
     > + Clone
 {
-    type Request = String;
-
-    type Response = String;
-
+    type Request = ServiceRequest;
+    type Response = ServiceResponse;
     type Error = ();
-
     type Config = ();
-
     type Service = ExtractService<T, S>;
-
     type InitError = ();
-
     type Future = Ready<Result<Self::Service, ()>>;
 
     fn new_service(&self, _: Self::Config) -> Self::Future {
@@ -310,17 +259,14 @@ pub struct ExtractService<T, S> {
 impl<T: FromRequest, S> Service for ExtractService<T, S> 
 where 
     S: Service<
-        Request=(T, String),
-        Response=String,
+        Request=(T, ServiceRequest),
+        Response=ServiceResponse,
         Error=()
     > + Clone
 {
-    type Request = String;
-
-    type Response = String;
-
+    type Request = ServiceRequest;
+    type Response = ServiceResponse;
     type Error = ();
-
     type Future = ExtractResponse<T, S>;
 
     fn call(&mut self, req: Self::Request) -> Self::Future {
@@ -335,7 +281,7 @@ where
 // ******************************************************************************
 #[pin_project]
 pub struct ExtractResponse <T: FromRequest, S: Service> {
-    req: String,
+    req: ServiceRequest,
     service: S,
     #[pin]
     fut: T::Future,
@@ -346,12 +292,12 @@ pub struct ExtractResponse <T: FromRequest, S: Service> {
 impl<T: FromRequest, S: Service> Future for ExtractResponse<T, S> 
 where
     S: Service<
-        Request = (T, String),
-        Response = String,
+        Request = (T, ServiceRequest),
+        Response = ServiceResponse,
         Error=()
     >,
 {
-    type Output = Result<String, ()>;
+    type Output = Result<ServiceResponse, ()>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
         let this = self.as_mut().project();

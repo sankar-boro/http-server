@@ -758,6 +758,7 @@ dependencies = [
  "async-std",
  "futures-util",
  "fxhash",
+ "loony-service",
  "mio",
  "pin-project",
  "tokio",

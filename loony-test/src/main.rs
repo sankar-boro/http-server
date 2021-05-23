@@ -1,9 +1,17 @@
 mod service;
 mod handler;
+mod responder;
+mod extract;
+mod request;
+mod route;
 
 use std::future::Future;
-use handler::{BoxedRouteService, BoxedRouteServiceFactory, Factory, FromRequest, Responder, Handler, Extract, RouteHandlerServiceFactory};
-use service::ServiceFactory;
+use extract::FromRequest;
+use request::HttpRequest;
+use responder::Responder;
+use route::BoxedRouteServiceFactory;
+use handler::{Factory, Handler, Extract, RouteHandlerServiceFactory};
+use service::ServiceRequest;
 
 struct Routes {
     routes: Vec<BoxedRouteServiceFactory>,
@@ -45,7 +53,8 @@ async fn main() {
         let a: &BoxedRouteServiceFactory = &r;
         let b = a.new_service(());
         let mut c = b.await.unwrap();
-        let d = c.call("World!".to_string()).await.unwrap();
-        println!("{}", d);
+        let sr = ServiceRequest(HttpRequest{url: "World!".to_string()});
+        let d = c.call(sr).await.unwrap();
+        println!("{}", d.0.value);
     }
 }

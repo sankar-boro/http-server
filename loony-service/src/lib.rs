@@ -6,5 +6,5 @@ pub use service::{
   IntoService,
   IntoServiceFactory,
   into_service,
-  BoxedServiceFactory,
+  // BoxedServiceFactory,
 };
