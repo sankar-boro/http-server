@@ -1,9 +1,17 @@
+use std::{future::{Ready, ready}, pin::Pin, task::Poll};
+use std::future::Future;
+use crate::service::{HttpResponse, ServiceRequest, ServiceResponse};
+
 pub trait Responder {
-    fn respond(self) -> String;
+    type Future: Future<Output=ServiceResponse>;
+    fn respond(&self, req: &ServiceRequest) -> Self::Future;
 }
 
 impl Responder for String {
-    fn respond(self) -> String {
-        self
+    type Future = Ready<ServiceResponse>;
+
+    fn respond(&self, _: &ServiceRequest) -> Self::Future {
+        let r = ServiceResponse(HttpResponse{value:self.clone()});
+        ready(r)
     }
 }

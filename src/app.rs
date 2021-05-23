@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use super::AppState;
-use crate::{resource::ResourceService, route::Route};
+use crate::{resource::CreateResourceService, route::Route};
 use crate::extensions::Extensions;
 use crate::config::{ ServiceConfig };
 use crate::resource::{Resource};
@@ -15,7 +15,7 @@ pub struct App {
     app_data:AppState,
     pub extensions: Extensions,
     pub services: Vec<BoxedResourceServiceFactory>,
-    pub factories: Option<Vec<ResourceService>>,
+    pub factories: Option<Vec<CreateResourceService>>,
 }
 
 impl App {
@@ -64,7 +64,7 @@ impl AppServiceFactory for App {
         let mut factories = Vec::new();
         let resource_services = &self.services;
         for resource_service in resource_services.iter() {
-            let resource_service = resource_service.new_service();
+            let resource_service = resource_service.new_service(());
             factories.push(resource_service); 
         }
 

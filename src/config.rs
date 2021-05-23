@@ -1,22 +1,15 @@
 use crate::{
-  DB,
-  resource::{
-    ResourceService,
-  },
+  // DB,
+  // resource::{
+  //   ResourceService,
+  // },
   scope::{
-    Scope,
-  }
+    Scope, BoxedResourceServiceFactory
+  },
+  // service::{ServiceRequest, ServiceResponse}
 };
-use loony_service::ServiceFactory;
+// use loony_service::ServiceFactory;
 
-type BoxedResourceServiceFactory = Box<
-    dyn ServiceFactory<
-        Request = DB, 
-        Response = String, 
-        Error = (), 
-        Service = ResourceService
-    >
->;
 
 pub struct ServiceConfig {
   pub services:Vec<BoxedResourceServiceFactory>,

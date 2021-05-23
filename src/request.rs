@@ -27,3 +27,8 @@ impl<'a> Request<'a> {
         self.path = Some("/");
     }
 }
+
+#[derive(Clone)]
+pub struct HttpRequest {
+    pub url: String,
+}

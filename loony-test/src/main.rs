@@ -10,7 +10,7 @@ use extract::FromRequest;
 use request::HttpRequest;
 use responder::Responder;
 use route::BoxedRouteServiceFactory;
-use handler::{Factory, Handler, Extract, RouteHandlerServiceFactory};
+use handler::{Factory, Handler, Extract, RouteServiceFactory};
 use service::ServiceRequest;
 
 struct Routes {
@@ -33,7 +33,7 @@ impl Routes {
     {
         let a: Handler<T, P, R, O> = Handler::new(factory);
         let b = Extract::new(a);
-        let c = RouteHandlerServiceFactory::new(b);
+        let c = RouteServiceFactory::new(b);
         self.routes.push(Box::new(c));
     }
 }

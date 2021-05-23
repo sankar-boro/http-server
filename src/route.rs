@@ -1,14 +1,18 @@
-use std::future::Future;
+use std::{future::{Future, ready}, process::Output, task::{Context, Poll}};
+use std::pin::Pin;
+// use std::future::Ready;
 use loony_service::{
     Service,
     ServiceFactory
 };
 
 use crate::{FromRequest};
-use crate::service::{Factory,Extract, RouteServiceFactory, Wrapper};
+use crate::handler::{Factory,Extract, RouteServiceFactory, Handler};
 use crate::responder::Responder;
 use crate::default::default;
 use crate::DB;
+use crate::service::{ServiceRequest, ServiceResponse};
+use futures_util::future::{ok, Ready};
 
 #[derive(Clone)]
 pub enum Method {
@@ -18,20 +22,24 @@ pub enum Method {
 
 pub type BoxedRouteService = Box<
     dyn Service<
-        Request = DB,
-        Response = String,
-        Error = (),
-    >,
+        Request=ServiceRequest,
+        Response=ServiceResponse,
+        Error=(),
+        Future=Pin<Box<dyn Future<Output=Result<ServiceResponse, ()>>>>
+    >
 >;
 
 pub type BoxedRouteServiceFactory = Box<
     dyn ServiceFactory<
-            Request = DB,
-            Response = String,
-            Service = BoxedRouteService,
-            Error = (),
-        >
-    >;
+        Request=ServiceRequest,
+        Response=ServiceResponse,
+        Error=(),
+        Service=BoxedRouteService,
+        Future=Pin<Box<dyn Future<Output=Result<BoxedRouteService, ()>>>>,
+        Config=(),
+        InitError=()
+    >
+>;
 
 pub struct Route {
     pub path: String,
@@ -43,7 +51,7 @@ impl<'route> Route {
     pub fn new(path: &str) -> Route {
         Route {
             path: path.to_owned(),
-            service: Box::new(RouteServiceFactory::new(Extract::new(Wrapper::new(default)))),
+            service: Box::new(RouteServiceFactory::new(Extract::new(Handler::new(default)))),
             method: Method::GET,
         }
     }
@@ -56,7 +64,7 @@ impl<'route> Route {
         O: Responder + 'static, 
     {
         
-        let service = Box::new(RouteServiceFactory::new(Extract::new(Wrapper::new(factory))));
+        let service = Box::new(RouteServiceFactory::new(Extract::new(Handler::new(factory))));
         self.service = service;
         self
     }
@@ -67,32 +75,62 @@ impl<'route> Route {
     }
 }
 
-pub type BoxService = Box<dyn Service<Request = DB, Response = String, Error = ()>>;
+pub type BoxService = Pin<
+    Box<
+        dyn Future<Output=Result<BoxedRouteService, ()>>
+    >
+>;
+#[pin_project::pin_project]
+pub struct RouteFutureService {
+    #[pin]
+    pub fut: BoxService,
+    pub method: Method,
+}
+
+impl Future for RouteFutureService {
+    type Output = Result<RouteService, ()>;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let this = self.project();
+
+        match this.fut.poll(cx)? {
+            Poll::Ready(service) => Poll::Ready(Ok(RouteService {
+                service,
+                method: this.method.clone(),
+            })),
+            Poll::Pending => Poll::Pending,
+        }
+    }
+}
 
 pub struct RouteService {
-    service: BoxService,
+    service: BoxedRouteService,
     method: Method,
 }
 
 impl Service for RouteService {
-    type Request = DB;
-    type Response = String;
+    type Request = ServiceRequest;
+    type Response = ServiceResponse;
     type Error = ();
+    type Future = Pin<Box<dyn Future<Output=Result<Self::Response, ()>>>>;
 
-    fn call(&mut self, req: Self::Request) -> Self::Response {
+    fn call(&mut self, req: ServiceRequest) -> Self::Future {
         self.service.call(req)
     }
 }
 
 impl ServiceFactory for Route {
-    type Request = DB;
-    type Response = String;
+    type Request = ServiceRequest;
+    type Response = ServiceResponse;
     type Error = ();
     type Service = RouteService;
+    type InitError = ();
+    type Config = ();
+    type Future = RouteFutureService;
 
-    fn new_service(&self) -> Self::Service {
-        let service = self.service.new_service();
-        RouteService { service, method: self.method.clone() }
+    fn new_service(&self, _: ()) -> Self::Future {
+        let fut = self.service.new_service(());
+        RouteFutureService { fut, method: self.method.clone() }
     }
 }
 

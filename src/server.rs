@@ -1,5 +1,5 @@
 use std::{cell::{RefCell}, net::TcpStream, rc::Rc, sync::mpsc::Receiver};
-use crate::{App, app::AppServiceFactory, connection::Connection, resource::ResourceService};
+use crate::{App, app::AppServiceFactory, connection::Connection, resource::CreateResourceService};
 use ahash::AHashMap;
 use crate::DB;
 use crate::builder::Builder;
@@ -14,7 +14,7 @@ pub type AppInstance = Box<dyn Fn() -> App + 'static>;
 pub struct HttpServer {
     app: AppInstance,
     builder: Builder,
-    routes: AHashMap<String, Rc<RefCell<ResourceService>>>,
+    routes: AHashMap<String, Rc<RefCell<CreateResourceService>>>,
     extensions: Extensions,
 }
 
