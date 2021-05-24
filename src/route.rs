@@ -147,12 +147,25 @@ pub fn post(path: &str) -> Route {
 }
 #[cfg(test)]
 mod tests {
+    use futures::{FutureExt, executor::block_on};
+
+    use crate::request::HttpRequest;
+
     use super::*;
 
-    async fn index(req: String) -> String {
-        req
+    async fn index(_: String) -> String {
+        "Hello World!".to_string()
     }
     #[test]
     fn route() {
+        let sr = ServiceRequest(HttpRequest { url: "/home".to_string() });
+        let r = Route::new("/home");
+        let r = r.route(index);
+        let a = r.new_service(());
+        let mut b = block_on(a).unwrap();
+        let c = b.call(sr);
+        let d = block_on(c).unwrap();
+        let e = d.0.value;
+        assert_eq!("Hello World!".to_string(), e);
     }
 }

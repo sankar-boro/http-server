@@ -1,6 +1,7 @@
 use crate::DB;
 use crate::request::Request;
-use loony_service::Service;
+use futures::executor::block_on;
+use loony_service::{Service, ServiceFactory};
 use std::{cell::{RefCell},rc::Rc};
 use crate::resource::CreateResourceService;
 use ahash::AHashMap;
@@ -20,6 +21,9 @@ impl<'a> Response<'a> {
         if let Some(path) = req.path {
             let service = self.routes.get(path);
             if let Some(s) = service {
+                let a = s.as_ref();
+                let b = a.borrow_mut();
+                // c.po
                 return Ok("".to_string());
                 // return Ok(s.call(db));
             }

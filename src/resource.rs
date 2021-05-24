@@ -73,8 +73,6 @@ impl Service for ResourceService {
 impl Future for CreateResourceService {
     type Output = Result<ResourceService, ()>;
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        // let this = &self.fut;
-        // let mut _fut = &this.fut;
         match self.fut.fut.as_mut().poll(cx) {
           Poll::Ready(service) => {
             let a =Poll::Ready(Ok(ResourceService {
