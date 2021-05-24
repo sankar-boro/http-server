@@ -21,7 +21,7 @@ impl<'a> Response<'a> {
     }
 
     pub fn build(&self, req: &Request, db: DB) -> Result<String, ()> {
-        if let Some(path) = req.path {
+        if let Some(path) = &req.uri {
             let service = self.routes.get(path);
             if let Some(s) = service {
                 let sr = ServiceRequest(HttpRequest { url: String::from(path), extensions: self.extensions.clone() });

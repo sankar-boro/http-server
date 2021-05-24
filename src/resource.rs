@@ -38,9 +38,6 @@ impl ServiceFactory for Resource {
     fn new_service(&self, _: ()) -> Self::Future {
         let mut path = self.prefix.clone();
         path.push_str(&self.route.path);
-        println!("{}", self.prefix.clone());
-        println!("{}", self.route.path);
-        println!("{}", path);
         let fut = self.route.new_service(());
         CreateResourceService {
           len: path.len() as u16,
