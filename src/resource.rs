@@ -86,3 +86,31 @@ impl Future for CreateResourceService {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use futures::{FutureExt, executor::block_on};
+
+    use crate::request::HttpRequest;
+    use crate::route::Route;
+
+    use super::*;
+
+    async fn index(_: String) -> String {
+        "Hello World!".to_string()
+    }
+    #[test]
+    fn resource() {
+      let sr = ServiceRequest(HttpRequest { url: "/home".to_string() });
+      let r = Route::new("/home");
+      let r = r.route(index);
+      let rs = Resource::new("".to_string());
+      let rs = rs.route(r);
+      let a = rs.new_service(());
+      let mut b = block_on(a).unwrap();
+      let c = b.call(sr);
+      let d = block_on(c).unwrap();
+      let e = d.0.value;
+      assert_eq!("Hello World!".to_string(), e);
+    }
+}
