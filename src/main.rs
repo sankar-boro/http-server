@@ -21,6 +21,7 @@ mod extract;
 
 use config::ServiceConfig;
 use app::App;
+use futures::future::ok;
 use server::HttpServer;
 use service::ServiceRequest;
 use crate::responder::Responder;
@@ -41,7 +42,7 @@ fn writer<W: Write>(f: &mut W, s: &str) -> Result<(), Error> {
     f.write_fmt(format_args!("{}", s))
 }
 
-async fn index() -> impl Responder {
+async fn index(_: ()) -> impl Responder {
     String::from("Hello World")
 }
 
@@ -73,27 +74,26 @@ pub struct DB {
 //   fn from_request(data: DB) -> Self;
 // }
 
-impl FromRequest for DB {
-    type Future = Ready<Result<DB, ()>>;
+impl FromRequest for web::Data<DB> {
+    type Future = Ready<Result<web::Data<DB>, ()>>;
     fn from_request(req: &ServiceRequest) -> Self::Future {
-    //   ready(Ok())
-    todo!()
+        let a = req.0.extensions.get::<DB>().unwrap();
+        ready(Ok(web::Data(a.clone())))
     }
-
 }
 
-impl FromRequest for (DB, ) {
-    type Future = Ready<Result<(DB, ), ()>>;
+impl FromRequest for (web::Data<DB>, ) {
+    type Future = Ready<Result<(web::Data<DB>, ), ()>>;
     fn from_request(req: &ServiceRequest) -> Self::Future {
-    //   (data, )
-    todo!()
+        let a = req.0.extensions.get::<DB>().unwrap();
+        ready(Ok((web::Data(a.clone()), )))
     }
 }
 
 impl FromRequest for () {
     type Future = Ready<Result<(), ()>>;
     fn from_request(_: &ServiceRequest) -> Self::Future {
-        todo!()
+        ready(Ok(()))
     }
 }
 
@@ -119,7 +119,7 @@ async fn main() {
         })
         .data(db.clone())
         .configure(routes)
-        // .route(web::get("/").route(index))
+        .route(web::get("/").route(index))
     )
     .run();
 }   

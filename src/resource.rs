@@ -91,17 +91,22 @@ impl Future for CreateResourceService {
 mod tests {
     use futures::{FutureExt, executor::block_on};
 
+    use crate::extensions::Extensions;
     use crate::request::HttpRequest;
     use crate::route::Route;
+    use crate::service::ServiceRequest;
+    use crate::resource::Resource;
+    use loony_service::{Service, ServiceFactory};
+    use std::rc::Rc;
 
-    use super::*;
+    // use super::*;
 
     async fn index(_: String) -> String {
         "Hello World!".to_string()
     }
     #[test]
     fn resource() {
-      let sr = ServiceRequest(HttpRequest { url: "/home".to_string() });
+      let sr = ServiceRequest(HttpRequest { url: "/home".to_string(), extensions: Rc::new(Extensions::new()) });
       let r = Route::new("/home");
       let r = r.route(index);
       let rs = Resource::new("".to_string());

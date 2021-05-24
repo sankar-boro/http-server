@@ -13,3 +13,6 @@ pub fn get(path: &str) -> Route
 pub fn scope(scope: &str) -> Scope {
   Scope::new(scope)
 }
+
+#[derive(Clone)]
+pub struct Data<T>(pub T);

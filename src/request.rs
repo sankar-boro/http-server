@@ -1,3 +1,6 @@
+use crate::extensions::Extensions;
+use std::rc::Rc;
+
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct Header<'a> {
     /// The name portion of a header.
@@ -31,4 +34,5 @@ impl<'a> Request<'a> {
 #[derive(Clone)]
 pub struct HttpRequest {
     pub url: String,
+    pub extensions: Rc<Extensions>
 }

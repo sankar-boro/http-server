@@ -92,7 +92,8 @@ mod tests {
                     .route(Route::new("/user").route(controller::get_user))
                     .route(Route::new("/delete").route(controller::get_user))
                 );
-        }).route(web::get("/").route(index));
+        });
+        // .route(web::get("/").route(index));
 
         let services = app.services;
         assert_eq!(3, services.len());

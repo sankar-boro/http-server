@@ -6,6 +6,7 @@ use crate::builder::Builder;
 use crate::response::Response;
 use crate::extensions::Extensions;
 use crate::request::{Header, EMPTY_HEADER, Request};
+use std::sync::Arc;
 
 static RES_OK: &str = "HTTP/1.1 200 OK\r\n\r\n";
 static RES_NF: &str = "HTTP/1.1 401 NOT FOUND\r\n\r\nNOT FOUND";
@@ -15,7 +16,7 @@ pub struct HttpServer {
     app: AppInstance,
     builder: Builder,
     routes: AHashMap<String, Rc<RefCell<CreateResourceService>>>,
-    extensions: Extensions,
+    extensions: Rc<Extensions>,
 }
 
 impl HttpServer {
@@ -24,7 +25,7 @@ impl HttpServer {
             app: Box::new(app), 
             builder: Builder::new(),
             routes: AHashMap::new(),
-            extensions: Extensions::new(),
+            extensions: Rc::new(Extensions::new()),
         }
     }
 
@@ -37,7 +38,7 @@ impl HttpServer {
                 self.routes.insert(factory.path.clone(), Rc::new(RefCell::new(factory)));
             }
         }
-        self.extensions = app.extensions;
+        self.extensions = Rc::new(app.extensions);
     }
 
     pub fn run(&mut self) {
@@ -47,7 +48,7 @@ impl HttpServer {
     }
 
     fn accept(&self, receiver: Receiver<TcpStream>) {
-        let res = Response::new(&self.routes);
+        let res = Response::new(&self.routes, self.extensions.clone());
         loop {
             let mut buffer = [0; 1024];
             let stream = receiver.recv().unwrap();
