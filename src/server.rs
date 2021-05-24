@@ -1,5 +1,5 @@
 use std::{cell::{RefCell}, net::TcpStream, rc::Rc, sync::mpsc::Receiver};
-use crate::{App, app::AppServiceFactory, connection::Connection, resource::CreateResourceService};
+use crate::{App, app::AppServiceFactory, connection::Connection, resource::{CreateResourceService, Resource, ResourceService}};
 use ahash::AHashMap;
 use crate::DB;
 use crate::builder::Builder;
@@ -15,7 +15,7 @@ pub type AppInstance = Box<dyn Fn() -> App + 'static>;
 pub struct HttpServer {
     app: AppInstance,
     builder: Builder,
-    routes: AHashMap<String, Rc<RefCell<CreateResourceService>>>,
+    routes: AHashMap<String, Rc<RefCell<ResourceService>>>,
     extensions: Rc<Extensions>,
 }
 
@@ -54,7 +54,6 @@ impl HttpServer {
             let stream = receiver.recv().unwrap();
             let mut conn = Connection::new(stream);
             conn.read(&mut buffer);
-            println!("{}", String::from_utf8_lossy(&buffer));
             let mut headers = [EMPTY_HEADER; 16];
             let mut req = Request::new(&mut headers);
             req.parse(&buffer);
@@ -76,9 +75,6 @@ impl HttpServer {
             }
 
             conn.close();
-            for h in headers.iter() {
-                println!("{:?}", h);
-            }
         }
     }
 }

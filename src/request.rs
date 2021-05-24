@@ -15,6 +15,7 @@ pub struct Header<'a> {
 }
 
 pub const EMPTY_HEADER: Header<'static> = Header { name: "", value: b"" };
+#[derive(Debug)]
 pub struct Request<'a> {
     pub path: Option<&'a str>
 }

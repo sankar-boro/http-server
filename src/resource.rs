@@ -38,6 +38,9 @@ impl ServiceFactory for Resource {
     fn new_service(&self, _: ()) -> Self::Future {
         let mut path = self.prefix.clone();
         path.push_str(&self.route.path);
+        println!("{}", self.prefix.clone());
+        println!("{}", self.route.path);
+        println!("{}", path);
         let fut = self.route.new_service(());
         CreateResourceService {
           len: path.len() as u16,
@@ -75,7 +78,7 @@ impl Future for CreateResourceService {
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         match self.fut.fut.as_mut().poll(cx) {
           Poll::Ready(service) => {
-            let a =Poll::Ready(Ok(ResourceService {
+            let a = Poll::Ready(Ok(ResourceService {
                 service: service.unwrap(),
                 path: self.path.clone(),
                 len: self.len,
@@ -86,6 +89,7 @@ impl Future for CreateResourceService {
         }
     }
 }
+
 
 #[cfg(test)]
 mod tests {

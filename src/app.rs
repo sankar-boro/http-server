@@ -1,10 +1,12 @@
 #![allow(dead_code)]
 
+use futures::executor::block_on;
+
 use super::AppState;
 use crate::{resource::CreateResourceService, route::Route};
 use crate::extensions::Extensions;
 use crate::config::{ ServiceConfig };
-use crate::resource::{Resource};
+use crate::resource::{Resource, ResourceService};
 use crate::scope::{BoxedResourceServiceFactory};
 
 pub trait Builder {
@@ -15,7 +17,7 @@ pub struct App {
     app_data:AppState,
     pub extensions: Extensions,
     pub services: Vec<BoxedResourceServiceFactory>,
-    pub factories: Option<Vec<CreateResourceService>>,
+    pub factories: Option<Vec<ResourceService>>,
 }
 
 impl App {
@@ -65,7 +67,8 @@ impl AppServiceFactory for App {
         let resource_services = &self.services;
         for resource_service in resource_services.iter() {
             let resource_service = resource_service.new_service(());
-            factories.push(resource_service); 
+            let a = block_on(resource_service).unwrap();
+            factories.push(a);
         }
 
         self.factories = Some(factories);

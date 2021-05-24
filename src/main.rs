@@ -18,6 +18,7 @@ mod response;
 mod request;
 mod service;
 mod extract;
+mod http;
 
 use config::ServiceConfig;
 use app::App;
