@@ -22,12 +22,11 @@ mod http;
 
 use config::ServiceConfig;
 use app::App;
-use futures::future::ok;
 use server::HttpServer;
 use service::ServiceRequest;
 use crate::responder::Responder;
 use std::fmt::{Error, Write};
-use scylla::{IntoTypedRows, Session, SessionBuilder};
+use scylla::{ Session, SessionBuilder};
 use std::sync::Arc;
 use std::future::{Ready, ready};
 use extract::FromRequest;
@@ -52,7 +51,6 @@ fn routes(config: &mut ServiceConfig) {
         web::scope("/user")
         .route(route::get("/get/all").route(controller::get_user))
         .route(route::get("/get/{userName}").route(controller::get_user))
-        .route(route::post("/delete").route(controller::delete_user))
     );
 
     config.service(
@@ -71,9 +69,6 @@ struct AppState {
 pub struct DB {
     session: Arc<Session>,
 }
-// pub trait FromRequest: Clone {
-//   fn from_request(data: DB) -> Self;
-// }
 
 impl FromRequest for web::Data<DB> {
     type Future = Ready<Result<web::Data<DB>, ()>>;

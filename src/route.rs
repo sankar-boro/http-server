@@ -1,19 +1,19 @@
-use std::{future::{Future, ready}, process::Output, task::{Context, Poll}};
-use std::pin::Pin;
-// use std::future::Ready;
+use std::{
+    future::Future,  
+    task::{Context, Poll},
+    pin::Pin
+};
 use loony_service::{
     Service,
     ServiceFactory
 };
-
-use crate::{FromRequest};
-use crate::handler::{Factory,Extract, RouteServiceFactory, Handler};
-use crate::responder::Responder;
-use crate::default::default;
-use crate::DB;
-use crate::service::{ServiceRequest, ServiceResponse};
-use futures_util::future::{ok, Ready};
-use crate::extensions::Extensions;
+use crate::{
+    FromRequest,
+    default::default,
+    responder::Responder,
+    service::{ServiceRequest, ServiceResponse},
+    handler::{Factory,Extract, RouteServiceFactory, Handler},
+};
 
 #[derive(Clone)]
 pub enum Method {

@@ -1,11 +1,18 @@
 use std::{pin::Pin, task::{Context, Poll}};
 
-use crate::{DB, route::{BoxedRouteService, RouteFutureService}, service::{ServiceRequest, ServiceResponse}};
-use crate::route::Route;
+use crate::{
+  route::{
+    BoxedRouteService, 
+    Route, 
+    RouteFutureService
+  }, 
+  service::{
+    ServiceRequest, 
+    ServiceResponse
+  }
+};
+use futures::{Future, FutureExt};
 use loony_service::{ServiceFactory, Service};
-use crate::route::RouteService;
-// use std::future::{Ready};
-use futures::{Future, FutureExt, future::{Ready, ok}};
 
 pub struct Resource {
   prefix: String,

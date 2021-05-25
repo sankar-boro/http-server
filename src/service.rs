@@ -1,6 +1,4 @@
 use crate::request::HttpRequest;
-
-
 #[derive(Clone)]
 pub struct HttpResponse {
     pub value: String,

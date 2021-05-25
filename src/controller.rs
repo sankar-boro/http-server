@@ -1,7 +1,7 @@
 use crate::DB;
 use crate::web;
+use scylla::{IntoTypedRows};
 use std::fmt::{Error, Write};
-use scylla::{IntoTypedRows, Session, SessionBuilder};
 
 
 fn writer<W: Write>(f: &mut W, s: &str) -> Result<(), Error> {
@@ -20,11 +20,4 @@ pub async fn get_user(app: web::Data<DB>) -> String {
         }
     }
     data
-}
-
-pub async fn delete_user(app: web::Data<DB>) -> String {
-    let mut buf = String::new();
-    // writer(&mut buf, &data).unwrap();
-    // writer(&mut buf, "DELETE USER").unwrap();
-    buf
 }

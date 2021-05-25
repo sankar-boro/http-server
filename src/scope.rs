@@ -1,9 +1,11 @@
 use async_std::task::block_on;
 use loony_service::{ServiceFactory};
-use crate::resource::{Resource, ResourceService};
-use crate::service::{ServiceRequest, ServiceResponse};
-use crate::{resource::CreateResourceService, route::{Route}};
-use crate::http::AppServiceFactory;
+use crate::{
+    route::Route,
+    http::AppServiceFactory,
+    service::{ServiceRequest, ServiceResponse},
+    resource::{Resource, ResourceService, CreateResourceService},
+};
 
 pub type BoxedResourceServiceFactory = Box<
     dyn ServiceFactory<

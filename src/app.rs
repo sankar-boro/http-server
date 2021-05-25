@@ -1,13 +1,12 @@
-#![allow(dead_code)]
-
-use futures::executor::block_on;
-
 use super::AppState;
-use crate::{resource::CreateResourceService, route::Route};
-use crate::extensions::Extensions;
-use crate::config::{ ServiceConfig };
-use crate::resource::{Resource, ResourceService};
-use crate::scope::{BoxedResourceServiceFactory};
+use crate::{
+    route::Route,
+    config::ServiceConfig,
+    extensions::Extensions,
+    scope::{BoxedResourceServiceFactory},
+    resource::{Resource, ResourceService},
+};
+use futures::executor::block_on;
 
 pub trait Builder {
     type Product;

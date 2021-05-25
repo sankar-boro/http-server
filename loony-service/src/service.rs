@@ -4,7 +4,6 @@ use std::cell::RefCell;
 use std::future::Future;
 use std::rc::Rc;
 use std::sync::Arc;
-use std::task::{self, Context, Poll};
 
 /// An asynchronous operation from `Request` to a `Response`.
 ///

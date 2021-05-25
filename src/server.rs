@@ -1,12 +1,15 @@
-use std::{cell::{RefCell}, net::TcpStream, rc::Rc, sync::mpsc::Receiver};
-use crate::{App, app::AppServiceFactory, connection::Connection, resource::{CreateResourceService, Resource, ResourceService}};
 use ahash::AHashMap;
-use crate::DB;
-use crate::builder::Builder;
-use crate::response::Response;
-use crate::extensions::Extensions;
-use crate::request::{Header, EMPTY_HEADER, Request};
-use std::sync::Arc;
+use crate::{
+    App, 
+    app::AppServiceFactory, 
+    connection::Connection, 
+    resource::ResourceService,
+    builder::Builder,
+    response::Response,
+    extensions::Extensions,
+    request::{EMPTY_HEADER, Request},
+};
+use std::{cell::{RefCell}, net::TcpStream, rc::Rc, sync::mpsc::Receiver};
 
 static RES_OK: &str = "HTTP/1.1 200 OK\r\n\r\n";
 static RES_NF: &str = "HTTP/1.1 401 NOT FOUND\r\n\r\nNOT FOUND";
@@ -58,19 +61,17 @@ impl HttpServer {
             let mut req = Request::new(&mut headers);
             req.parse(&buffer);
 
-            let db = self.extensions.get::<DB>();
-            if let Some(db) = db {
-                let r = res.build(&req, db.clone());
-                match r {
-                    Ok(r) => {
-                        let mut res = String::from("");
-                        res.push_str(RES_OK);
-                        res.push_str(&r);
-                        conn.write(&res);
-                    }
-                    Err(_) => {
-                        conn.write(RES_NF);
-                    }
+            
+            let r = res.build(&req);
+            match r {
+                Ok(r) => {
+                    let mut res = String::from("");
+                    res.push_str(RES_OK);
+                    res.push_str(&r);
+                    conn.write(&res);
+                }
+                Err(_) => {
+                    conn.write(RES_NF);
                 }
             }
 

@@ -1,11 +1,13 @@
-use crate::{DB, request::HttpRequest, service::ServiceRequest};
-use crate::request::Request;
-use futures::{FutureExt, executor::block_on};
-use loony_service::{Service, ServiceFactory};
-use std::{cell::{RefCell},rc::Rc};
-use crate::resource::{CreateResourceService, ResourceService};
+use crate::{
+    service::ServiceRequest,
+    resource::ResourceService,
+    request::{Request, HttpRequest}, 
+    extensions::Extensions,
+};
 use ahash::AHashMap;
-use crate::extensions::Extensions;
+use loony_service::Service;
+use std::{cell::RefCell,rc::Rc};
+use futures::executor::block_on;
 
 pub struct Response<'a> {
     routes: &'a AHashMap<String, Rc<RefCell<ResourceService>>>,
@@ -20,7 +22,7 @@ impl<'a> Response<'a> {
         }
     }
 
-    pub fn build(&self, req: &Request, db: DB) -> Result<String, ()> {
+    pub fn build(&self, req: &Request) -> Result<String, ()> {
         if let Some(path) = &req.uri {
             let service = self.routes.get(path);
             if let Some(s) = service {

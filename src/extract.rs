@@ -1,5 +1,5 @@
-use std::{future::{Ready, ready}, pin::Pin, task::Poll};
 use std::future::Future;
+use std::future::{Ready, ready};
 use crate::service::ServiceRequest;
 
 pub trait FromRequest: Clone {

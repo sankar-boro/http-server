@@ -4,14 +4,7 @@ use std::slice::Iter;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct Header<'a> {
-    /// The name portion of a header.
-    ///
-    /// A header name must be valid ASCII-US, so it's safe to store as a `&str`.
     pub name: &'a str,
-    /// The value portion of a header.
-    ///
-    /// While headers **should** be ASCII-US, the specification allows for
-    /// values that may not be, and so the value is stored as bytes.
     pub value: &'a [u8],
 }
 
@@ -24,7 +17,7 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn new(headers: &[Header; 16]) -> Self {
+    pub fn new(_: &[Header; 16]) -> Self {
         Self {
             method: None,
             uri: None,

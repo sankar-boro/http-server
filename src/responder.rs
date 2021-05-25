@@ -1,5 +1,4 @@
-use std::{future::{Ready, ready}, pin::Pin, task::Poll};
-use std::future::Future;
+use std::future::{Ready, ready, Future};
 use crate::service::{HttpResponse, ServiceRequest, ServiceResponse};
 
 pub trait Responder {
