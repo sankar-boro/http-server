@@ -14,15 +14,17 @@ members = [
   "loony-service",
   "loony-futures", 
   "loony-macro",
+  "loony-practise",
 ]
 
 [dependencies]
 loony-http = {path = "./loony-http"}
-# loony-server = {path = "./loony-server"}
 loony-test = {path = "./loony-test"}
-loony-service = {path = "./loony-service"}
-loony-futures = {path = "./loony-futures"}
 loony-macro = {path = "./loony-macro"}
+loony-service = {path = "./loony-service"}
+# loony-server = {path = "./loony-server"}
+loony-futures = {path = "./loony-futures"}
+loony-practise = {path = "./loony-practise"}
 fxhash = "0.2.1"
 http = "0.2.1"
 futures = "0.3.8"

@@ -42,7 +42,7 @@ fn writer<W: Write>(f: &mut W, s: &str) -> Result<(), Error> {
     f.write_fmt(format_args!("{}", s))
 }
 
-async fn index(_: ()) -> impl Responder {
+async fn index() -> impl Responder {
     String::from("Hello World")
 }
 
@@ -90,6 +90,13 @@ impl FromRequest for () {
     type Future = Ready<Result<(), ()>>;
     fn from_request(_: &ServiceRequest) -> Self::Future {
         ready(Ok(()))
+    }
+}
+
+impl FromRequest for (String, ) {
+    type Future = Ready<Result<(String,), ()>>;
+    fn from_request(_: &ServiceRequest) -> Self::Future {
+        ready(Ok(("".to_string(), )))
     }
 }
 

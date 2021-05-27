@@ -20,15 +20,26 @@ where
     fn call(&self, param: P) -> R;
 }
 
-impl<T, P, R, O> Factory<P, R, O> for T 
+impl<T, R, O> Factory<(), R, O> for T 
 where
-    T: Fn(P) -> R + Clone + 'static,
-    P: FromRequest,
+    T: Fn() -> R + Clone + 'static,
     R: Future<Output=O>,
     O: Responder 
 {
-    fn call(&self, param: P) -> R {
-        (self)(param)
+    fn call(&self, _: ()) -> R {
+        (self)()
+    }
+}
+
+impl<T, PA, R, O> Factory<(PA,), R, O> for T 
+where
+    T: Fn(PA,) -> R + Clone + 'static,
+    // P: FromRequest,
+    R: Future<Output=O>,
+    O: Responder 
+{
+    fn call(&self, (PA,): (PA,)) -> R {
+        (self)(PA)
     }
 }
 // ******************************************************************************
