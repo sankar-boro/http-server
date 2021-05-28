@@ -1,10 +1,9 @@
 use async_std::task::block_on;
 use loony_service::{ServiceFactory};
 use crate::{
-    route::Route,
-    http::AppServiceFactory,
-    service::{ServiceRequest, ServiceResponse},
-    resource::{Resource, ResourceService, CreateResourceService},
+    route::Route, 
+    resource::{Resource, ResourceService, CreateResourceService}, 
+    service::{AppServiceFactory, HttpServiceFactory, ServiceRequest, ServiceResponse}
 };
 
 pub type BoxedResourceServiceFactory = Box<
@@ -21,8 +20,7 @@ pub type BoxedResourceServiceFactory = Box<
 
 pub struct Scope {
     pub scope: String,
-    pub services: Vec<BoxedResourceServiceFactory>,
-    pub factory_services: Vec<ResourceService>,
+    pub services: Vec<Box<dyn AppServiceFactory>>,
 }
 
 impl Scope {
@@ -30,7 +28,6 @@ impl Scope {
         Scope {
             scope: scope.to_owned(),
             services: Vec::new(),
-            factory_services: Vec::new(),
         }
     }
 
@@ -40,13 +37,12 @@ impl Scope {
     }
 }
 
-impl AppServiceFactory for Scope {
-  fn register(&mut self) {
-    let a = &self.services;
-    for s in a.iter() {
-        let b = s.new_service(());
-        let c = block_on(b).unwrap();
-        self.factory_services.push(c);
-    }   
-  }
+impl HttpServiceFactory for Scope {
+    fn register(&mut self) {
+        
+    }
+}
+
+pub struct ScopeFactory {
+    services: Vec<ResourceService>
 }

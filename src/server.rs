@@ -1,12 +1,12 @@
 use ahash::AHashMap;
 use crate::{
     App, 
-    app::AppServiceFactory, 
-    connection::Connection, 
-    resource::ResourceService,
     builder::Builder,
     response::Response,
     extensions::Extensions,
+    connection::Connection, 
+    resource::ResourceService,
+    service::AppServiceFactory,
     request::{EMPTY_HEADER, Request},
 };
 use std::{cell::{RefCell}, net::TcpStream, rc::Rc, sync::mpsc::Receiver};

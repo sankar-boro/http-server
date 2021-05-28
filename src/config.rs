@@ -1,7 +1,7 @@
-use crate::scope::{Scope, BoxedResourceServiceFactory};
+use crate::{scope::Scope, service::{AppServiceFactory, HttpServiceFactory, ServiceFactoryWrapper}};
 
 pub struct ServiceConfig {
-  pub services:Vec<BoxedResourceServiceFactory>,
+  pub services:Vec<Box<dyn AppServiceFactory>>,
 }
 
 impl ServiceConfig {
@@ -11,8 +11,10 @@ impl ServiceConfig {
     }
   }
 	
-	pub fn service(&mut self, service: Scope) {
-    let services = service.services;
-    self.services.extend(services);
+	pub fn service<T>(&mut self, factory: T) 
+  where 
+    T: HttpServiceFactory + 'static
+  {
+    self.services.push(Box::new(ServiceFactoryWrapper::new(factory)));
   }
 }

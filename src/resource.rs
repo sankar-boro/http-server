@@ -8,7 +8,8 @@ use crate::{
   }, 
   service::{
     ServiceRequest, 
-    ServiceResponse
+    ServiceResponse,
+    AppServiceFactory,
   }
 };
 use futures::{Future, FutureExt};
@@ -52,6 +53,12 @@ impl ServiceFactory for Resource {
           fut,
         }
     }
+}
+
+impl AppServiceFactory for Resource {
+  fn register(&mut self) {
+      
+  }
 }
 #[pin_project::pin_project]
 pub struct CreateResourceService {

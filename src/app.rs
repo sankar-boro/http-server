@@ -1,11 +1,5 @@
 use super::AppState;
-use crate::{
-    route::Route,
-    config::ServiceConfig,
-    extensions::Extensions,
-    scope::{BoxedResourceServiceFactory},
-    resource::{Resource, ResourceService},
-};
+use crate::{config::ServiceConfig, extensions::Extensions, resource::{Resource, ResourceService}, route::Route, service::{AppServiceFactory, HttpServiceFactory}};
 use futures::executor::block_on;
 
 pub trait Builder {
@@ -15,7 +9,7 @@ pub trait Builder {
 pub struct App {
     app_data:AppState,
     pub extensions: Extensions,
-    pub services: Vec<BoxedResourceServiceFactory>,
+    pub services: Vec<Box<dyn AppServiceFactory>>,
     pub factories: Option<Vec<ResourceService>>,
 }
 
@@ -56,21 +50,17 @@ impl App {
 
 }
 
-pub trait AppServiceFactory {
-    fn register(&mut self);
-}
-
 impl AppServiceFactory for App {
     fn register(&mut self) {
-        let mut factories = Vec::new();
-        let resource_services = &self.services;
-        for resource_service in resource_services.iter() {
-            let resource_service = resource_service.new_service(());
-            let a = block_on(resource_service).unwrap();
-            factories.push(a);
-        }
+        // let mut factories = Vec::new();
+        // let resource_services = &self.services;
+        // for resource_service in resource_services.iter() {
+        //     let resource_service = resource_service.new_service(());
+        //     let a = block_on(resource_service).unwrap();
+        //     factories.push(a);
+        // }
 
-        self.factories = Some(factories);
+        // self.factories = Some(factories);
     }
 }
 
