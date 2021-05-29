@@ -1,7 +1,23 @@
-use crate::{scope::Scope, service::{AppServiceFactory, HttpServiceFactory, ServiceFactoryWrapper}};
+use crate::{resource::ResourceService, scope::Scope, service::{AppServiceFactory, HttpServiceFactory, ServiceFactoryWrapper}};
 
 pub struct ServiceConfig {
   pub services:Vec<Box<dyn AppServiceFactory>>,
+}
+
+pub struct AppService {
+  services: Vec<ResourceService>
+}
+
+impl AppService {
+  pub fn new() -> Self {
+    AppService {
+      services: Vec::new(),
+    }
+  }
+
+  pub fn service(&mut self, service: ResourceService) {
+    self.services.push(service);
+  }
 }
 
 impl ServiceConfig {

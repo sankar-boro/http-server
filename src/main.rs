@@ -18,6 +18,7 @@ mod response;
 mod request;
 mod service;
 mod extract;
+mod app_service;
 
 use config::ServiceConfig;
 use app::App;
@@ -55,7 +56,7 @@ fn routes(config: &mut ServiceConfig) {
 }
 
 #[derive(Debug, Clone)]
-struct AppState {
+pub struct AppState {
     name: String,
 }
 

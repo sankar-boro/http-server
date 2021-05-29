@@ -1,14 +1,5 @@
 use ahash::AHashMap;
-use crate::{
-    App, 
-    builder::Builder,
-    response::Response,
-    extensions::Extensions,
-    connection::Connection, 
-    resource::ResourceService,
-    service::AppServiceFactory,
-    request::{EMPTY_HEADER, Request},
-};
+use crate::{App, builder::Builder, config::AppService, connection::Connection, extensions::Extensions, request::{EMPTY_HEADER, Request}, resource::ResourceService, response::Response, service::AppServiceFactory};
 use std::{cell::{RefCell}, net::TcpStream, rc::Rc, sync::mpsc::Receiver};
 
 static RES_OK: &str = "HTTP/1.1 200 OK\r\n\r\n";
@@ -34,7 +25,8 @@ impl HttpServer {
 
     fn start(&mut self) {
         let mut app = (self.app)();
-        app.register();
+        let mut app_service = AppService::new();
+        app.register(&mut app_service);
         if let Some(factories) = app.factories {
             let factories = factories;
             for factory in factories {

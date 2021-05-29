@@ -1,10 +1,10 @@
-use crate::request::HttpRequest;
+use crate::{config::AppService, request::HttpRequest};
 
 pub trait HttpServiceFactory {
-    fn register(&mut self);
+    fn register(self,  config: &mut AppService);
 }
 pub trait AppServiceFactory {
-    fn register(&mut self);
+    fn register(&mut self, config: &mut AppService);
 }
 #[derive(Clone)]
 pub struct HttpResponse {
@@ -30,9 +30,9 @@ impl<T> AppServiceFactory for ServiceFactoryWrapper<T>
 where
     T: HttpServiceFactory,
 {
-    fn register(&mut self) {
-        if let Some(mut item) = self.factory.take() {
-            item.register()
+    fn register(&mut self, config: &mut AppService) {
+        if let Some(item) = self.factory.take() {
+            item.register(config)
         }
     }
 }

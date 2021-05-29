@@ -1,6 +1,10 @@
+use std::{borrow::Borrow, cell::RefCell, rc::Rc};
+
 use super::AppState;
-use crate::{config::ServiceConfig, extensions::Extensions, resource::{Resource, ResourceService}, route::Route, service::{AppServiceFactory, HttpServiceFactory}};
+use crate::app_service::AppInit;
+use crate::{config::{AppService, ServiceConfig}, extensions::Extensions, resource::{Resource, ResourceService}, route::Route, service::{AppServiceFactory, HttpServiceFactory}};
 use futures::executor::block_on;
+use loony_service::IntoServiceFactory;
 
 pub trait Builder {
     type Product;
@@ -50,17 +54,33 @@ impl App {
 
 }
 
-impl AppServiceFactory for App {
-    fn register(&mut self) {
-        // let mut factories = Vec::new();
-        // let resource_services = &self.services;
-        // for resource_service in resource_services.iter() {
-        //     let resource_service = resource_service.new_service(());
-        //     let a = block_on(resource_service).unwrap();
-        //     factories.push(a);
-        // }
+impl IntoServiceFactory<AppInit> for App {
+    fn into_factory(self) -> AppInit {
+        AppInit {
+            services: Rc::new(RefCell::new(self.services)),
+            app_data: self.app_data,
+            extensions: self.extensions,
+        }
+    }
+}
+struct Ap {
+    services: Rc<RefCell<Vec<Box<dyn AppServiceFactory>>>>
+}
+trait ABC {
+    fn dos(self) -> Ap;
+}
 
-        // self.factories = Some(factories);
+impl ABC for App {
+    fn dos(self) -> Ap {
+        Ap {
+            services: Rc::new(RefCell::new(self.services)) 
+        }
+    }
+}
+
+impl AppServiceFactory for App {
+    fn register(&mut self, config: &mut AppService) {
+        let a = Rc::new(RefCell::new(&self.services));
     }
 }
 

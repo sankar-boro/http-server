@@ -1,23 +1,27 @@
-use std::{pin::Pin, task::{Context, Poll}};
+use std::{
+  pin::Pin, 
+  rc::Rc,
+  cell::RefCell,
+  task::{Context, Poll},
+};
 
-use crate::{
-  route::{
+use crate::{config::AppService, route::{
     BoxedRouteService, 
     Route, 
     RouteFutureService
-  }, 
-  service::{
+  }, service::{
     ServiceRequest, 
     ServiceResponse,
     AppServiceFactory,
-  }
-};
+  }};
+use async_std::task::block_on;
 use futures::{Future, FutureExt};
 use loony_service::{ServiceFactory, Service};
 
 pub struct Resource {
   prefix: String,
   route: Route,
+  route_service: Rc<RefCell<Option<ResourceService>>>
 }
 
 impl Resource {
@@ -25,6 +29,7 @@ impl Resource {
     Resource {
       prefix,
       route: Route::new(""),
+      route_service: Rc::new(RefCell::new(None)),
     }
   }
 
@@ -56,10 +61,13 @@ impl ServiceFactory for Resource {
 }
 
 impl AppServiceFactory for Resource {
-  fn register(&mut self) {
-      
+  fn register(&mut self, config: &mut AppService) {
+    let a = self.new_service(());
+    let b = block_on(a).unwrap();
+    config.service(b);
   }
 }
+
 #[pin_project::pin_project]
 pub struct CreateResourceService {
     #[pin]
@@ -104,33 +112,32 @@ impl Future for CreateResourceService {
 
 #[cfg(test)]
 mod tests {
-    use futures::{FutureExt, executor::block_on};
-
     use crate::extensions::Extensions;
     use crate::request::HttpRequest;
     use crate::route::Route;
+    use crate::service::AppServiceFactory;
     use crate::service::ServiceRequest;
     use crate::resource::Resource;
-    use loony_service::{Service, ServiceFactory};
+    use loony_service::Service;
     use std::rc::Rc;
-
-    // use super::*;
+    use crate::config::AppService;
 
     async fn index(_: String) -> String {
         "Hello World!".to_string()
     }
+
     #[test]
     fn resource() {
-      let sr = ServiceRequest(HttpRequest { url: "/home".to_string(), extensions: Rc::new(Extensions::new()) });
       let r = Route::new("/home");
       let r = r.route(index);
       let rs = Resource::new("".to_string());
-      let rs = rs.route(r);
-      let a = rs.new_service(());
-      let mut b = block_on(a).unwrap();
-      let c = b.call(sr);
-      let d = block_on(c).unwrap();
-      let e = d.0.value;
-      assert_eq!("Hello World!".to_string(), e);
+      let mut rs = rs.route(r);
+      let mut a_ser = AppService::new();
+      rs.register(&mut a_ser);
+      let sr = ServiceRequest(HttpRequest { url: "/home".to_string(), extensions: Rc::new(Extensions::new()) });
+      let mut a= rs.route_service.borrow_mut();
+      if let Some(mut c) = a.take() {
+        c.call(sr);
+      }
     }
 }
