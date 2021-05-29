@@ -1,6 +1,7 @@
 use ahash::AHashMap;
-use loony_service::IntoServiceFactory;
-use crate::{App, builder::Builder, config::AppService, connection::Connection, extensions::Extensions, request::{EMPTY_HEADER, Request}, resource::ResourceService, response::Response, service::AppServiceFactory};
+use async_std::task::block_on;
+use loony_service::{IntoServiceFactory, Service, ServiceFactory};
+use crate::{App, builder::Builder, config::AppService, connection::Connection, extensions::Extensions, request::{EMPTY_HEADER, HttpRequest, Request}, resource::ResourceService, response::Response, service::{AppServiceFactory, ServiceRequest}};
 use std::{cell::{RefCell}, net::TcpStream, rc::Rc, sync::mpsc::Receiver};
 
 static RES_OK: &str = "HTTP/1.1 200 OK\r\n\r\n";
@@ -12,6 +13,7 @@ pub struct HttpServer {
     builder: Builder,
     routes: AHashMap<String, Rc<RefCell<ResourceService>>>,
     extensions: Rc<Extensions>,
+    services: Vec<Rc<RefCell<ResourceService>>>
 }
 
 impl HttpServer {
@@ -21,11 +23,26 @@ impl HttpServer {
             builder: Builder::new(),
             routes: AHashMap::new(),
             extensions: Rc::new(Extensions::new()),
+            services: Vec::new(),
         }
     }
 
     fn start(&mut self) {
-        // let mut app = (self.app)();
+        let app = (self.app)();
+        let a = app.into_factory();
+        let b = a.new_service(());
+        let c = block_on(b).unwrap();
+        let d = c.services;
+        self.services.extend(d);
+        self.extensions = Rc::new(a.extensions);
+        let e = Rc::clone(&self.services[0]);
+        let mut f = e.as_ref().borrow_mut();
+        let req = ServiceRequest(HttpRequest { url: String::from("/home"), extensions: self.extensions.clone() });
+        let g = f.call(req);
+        let h = block_on(g).unwrap();
+        let i = h.0.value;
+        println!("{}", i);
+        println!("{}", f.path);
         // let mut app_service = AppService::new();
         // app.register(&mut app_service);
         // if let Some(factories) = app.factories {
@@ -34,13 +51,12 @@ impl HttpServer {
         //         self.routes.insert(factory.path.clone(), Rc::new(RefCell::new(factory)));
         //     }
         // }
-        // self.extensions = Rc::new(app.extensions);
     }
 
     pub fn run(&mut self) {
         self.start();
-        let a = self.builder.run();
-        self.accept(a);
+        // let a = self.builder.run();
+        // self.accept(a);
     }
 
     fn accept(&self, receiver: Receiver<TcpStream>) {

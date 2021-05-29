@@ -1,3 +1,4 @@
+use futures::future::ready;
 use futures::{Future, future::Ready};
 use loony_service::{ServiceFactory, Service};
 use std::rc::Rc;
@@ -18,9 +19,9 @@ pub struct AppInit {
 }
 
 impl ServiceFactory for AppInit {
-    type Request = ServiceRequest;
+    type Request = ();
 
-    type Response = ServiceResponse;
+    type Response = ();
 
     type Error = ();
 
@@ -30,7 +31,7 @@ impl ServiceFactory for AppInit {
 
     type InitError = ();
 
-    type Future = AppFutureService;
+    type Future = Ready<Result<AppHttpService, ()>>;
 
     fn new_service(&self, _: Self::Config) -> Self::Future {
         let mut config = AppService::new();
@@ -40,39 +41,26 @@ impl ServiceFactory for AppInit {
 
         let services = config.into_services();
         
-        AppFutureService {
+        ready(Ok(AppHttpService {
             services,
-        }
+        }))
     }
 }
  
 pub struct AppHttpService {
-    services: Vec<ResourceService>
+    pub(crate) services: Vec<Rc<RefCell<ResourceService>>>
 }
 
 impl Service for AppHttpService {
-    type Request = ServiceRequest;
+    type Request = ();
 
-    type Response = ServiceResponse;
+    type Response = ();
 
     type Error = ();
 
-    type Future = Ready<Result<ServiceResponse, ()>>;
+    type Future = Ready<Result<(), ()>>;
 
     fn call(&mut self, req: Self::Request) -> Self::Future {
-        todo!()
-    }
-}
-
-#[pin_project::pin_project]
-pub struct AppFutureService {
-    services: Vec<ResourceService>
-}
-
-impl Future for AppFutureService {
-    type Output = Result<AppHttpService, ()>;
-
-    fn poll(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> std::task::Poll<Self::Output> {
-        todo!()
+        ready(Ok(()))
     }
 }

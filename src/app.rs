@@ -28,6 +28,7 @@ impl App {
     }
 
     pub fn app_data<U: 'static>(mut self, ext: U) -> Self {
+        println!("ex");
         self.extensions.insert(ext);
         self
     }

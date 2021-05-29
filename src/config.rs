@@ -1,3 +1,5 @@
+use std::rc::Rc;
+use std::cell::RefCell;
 use crate::{resource::ResourceService, scope::Scope, service::{AppServiceFactory, HttpServiceFactory, ServiceFactoryWrapper}};
 
 pub struct ServiceConfig {
@@ -5,7 +7,7 @@ pub struct ServiceConfig {
 }
 
 pub struct AppService {
-  pub services: Vec<ResourceService>
+  pub services: Vec<Rc<RefCell<ResourceService>>>
 }
 
 impl AppService {
@@ -16,10 +18,10 @@ impl AppService {
   }
 
   pub fn service(&mut self, service: ResourceService) {
-    self.services.push(service);
+    self.services.push(Rc::new(RefCell::new(service)));
   }
 
-  pub fn into_services(self) -> Vec<ResourceService> {
+  pub fn into_services(self) -> Vec<Rc<RefCell<ResourceService>>> {
     self.services
   }
 }
