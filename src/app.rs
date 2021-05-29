@@ -14,7 +14,6 @@ pub struct App {
     app_data:AppState,
     pub extensions: Extensions,
     pub services: Vec<Box<dyn AppServiceFactory>>,
-    pub factories: Option<Vec<ResourceService>>,
 }
 
 impl App {
@@ -25,7 +24,6 @@ impl App {
             },
             extensions: Extensions::new(),
             services: Vec::new(),
-            factories: None,
         }
     }
 
@@ -63,26 +61,7 @@ impl IntoServiceFactory<AppInit> for App {
         }
     }
 }
-struct Ap {
-    services: Rc<RefCell<Vec<Box<dyn AppServiceFactory>>>>
-}
-trait ABC {
-    fn dos(self) -> Ap;
-}
 
-impl ABC for App {
-    fn dos(self) -> Ap {
-        Ap {
-            services: Rc::new(RefCell::new(self.services)) 
-        }
-    }
-}
-
-impl AppServiceFactory for App {
-    fn register(&mut self, config: &mut AppService) {
-        let a = Rc::new(RefCell::new(&self.services));
-    }
-}
 
 #[cfg(test)]
 mod tests {

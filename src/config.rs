@@ -5,7 +5,7 @@ pub struct ServiceConfig {
 }
 
 pub struct AppService {
-  services: Vec<ResourceService>
+  pub services: Vec<ResourceService>
 }
 
 impl AppService {
@@ -17,6 +17,10 @@ impl AppService {
 
   pub fn service(&mut self, service: ResourceService) {
     self.services.push(service);
+  }
+
+  pub fn into_services(self) -> Vec<ResourceService> {
+    self.services
   }
 }
 

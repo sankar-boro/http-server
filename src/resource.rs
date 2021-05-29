@@ -19,15 +19,15 @@ use futures::{Future, FutureExt};
 use loony_service::{ServiceFactory, Service};
 
 pub struct Resource {
-  prefix: String,
+  scope: String,
   route: Route,
   route_service: Rc<RefCell<Option<ResourceService>>>
 }
 
 impl Resource {
-  pub fn new(prefix: String) -> Self {
+  pub fn new(scope: String) -> Self {
     Resource {
-      prefix,
+      scope,
       route: Route::new(""),
       route_service: Rc::new(RefCell::new(None)),
     }
@@ -49,7 +49,7 @@ impl ServiceFactory for Resource {
     type Config = ();
  
     fn new_service(&self, _: ()) -> Self::Future {
-        let mut path = self.prefix.clone();
+        let mut path = self.scope.clone();
         path.push_str(&self.route.path);
         let fut = self.route.new_service(());
         CreateResourceService {

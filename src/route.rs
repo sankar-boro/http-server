@@ -42,6 +42,7 @@ pub type BoxedRouteServiceFactory = Box<
     >
 >;
 
+// #[derive(Clone)]
 pub struct Route {
     pub path: String,
     pub service: BoxedRouteServiceFactory,

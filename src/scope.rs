@@ -23,7 +23,7 @@ impl Scope {
     pub fn new(scope: &str) -> Self {
         Scope {
             scope: scope.to_owned(),
-            services: Vec::new(),
+            services: Vec::new()
         }
     }
 
