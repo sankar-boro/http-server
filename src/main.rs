@@ -49,9 +49,9 @@ async fn index() -> impl Responder {
 fn routes(config: &mut ServiceConfig) {
     config.service(
         web::scope("/user")
-        .route(route::get("/get:userid").route(controller::get_user)) // expects an url of /user/get/one?userid=<somevalue>
-        .route(route::get("/delete:userid").route(controller::get_user)) // expects an url of /user/get/one?userid=<somevalue>
-        .route(route::get("/update:userid").route(controller::get_user)) // expects an url of /user/get/one?userid=<somevalue>
+        .route(route::get("/get::userid").route(controller::get_user)) // expects an url of /user/get/one?userid=<somevalue>
+        .route(route::get("/delete::userid").route(controller::get_user)) // expects an url of /user/get/one?userid=<somevalue>
+        .route(route::get("/update::userid").route(controller::get_user)) // expects an url of /user/get/one?userid=<somevalue>
     );
 }
 

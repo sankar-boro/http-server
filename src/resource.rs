@@ -49,12 +49,21 @@ impl ServiceFactory for Resource {
     type Config = ();
  
     fn new_service(&self, _: ()) -> Self::Future {
-        let mut path = self.scope.clone();
-        path.push_str(&self.route.path);
+        let mut route_name = self.scope.clone();
+        let a: Vec<&str> = self.route.path.split("::").collect();
+        let mut b = a.iter();
+        if let Some(data) = b.next() {
+          route_name.push_str(data);
+        }
+        let mut route_query_param = String::new();
+        if let Some(data) = b.next() {
+          route_query_param.push_str(data);
+        }
         let fut = self.route.new_service(());
         CreateResourceService {
-          len: path.len() as u16,
-          path,
+          len: route_name.len() as u16,
+          route_name,
+          route_query_param,
           fut,
         }
     }
@@ -72,12 +81,14 @@ impl AppServiceFactory for Resource {
 pub struct CreateResourceService {
     #[pin]
     pub fut: RouteFutureService,
-    pub path: String,
+    pub route_name: String,
+    pub route_query_param: String,
     pub len: u16,
 }
 pub struct ResourceService {
     pub service: BoxedRouteService,
-    pub path: String,
+    pub route_name: String,
+    pub route_query_param: String,
     pub len: u16,
 }
 
@@ -99,7 +110,8 @@ impl Future for CreateResourceService {
           Poll::Ready(service) => {
             let a = Poll::Ready(Ok(ResourceService {
                 service: service.unwrap(),
-                path: self.path.clone(),
+                route_name: self.route_name.clone(),
+                route_query_param: self.route_query_param.clone(),
                 len: self.len,
             }));
             return a;
