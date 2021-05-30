@@ -1,7 +1,6 @@
 use std::future::Future;
 use std::marker::PhantomData;
 use pin_project::pin_project;
-use async_std::task::block_on;
 use futures_util::{FutureExt, ready as _ready};
 use std::{future::{Ready, ready}, pin::Pin, task::Poll};
 
@@ -18,29 +17,6 @@ where
     O: Responder,
 {
     fn call(&self, param: P) -> R;
-}
-
-impl<T, R, O> Factory<(), R, O> for T 
-where
-    T: Fn() -> R + Clone + 'static,
-    R: Future<Output=O>,
-    O: Responder 
-{
-    fn call(&self, _: ()) -> R {
-        (self)()
-    }
-}
-
-impl<T, PA, R, O> Factory<(PA,), R, O> for T 
-where
-    T: Fn(PA,) -> R + Clone + 'static,
-    // P: FromRequest,
-    R: Future<Output=O>,
-    O: Responder 
-{
-    fn call(&self, (PA,): (PA,)) -> R {
-        (self)(PA)
-    }
 }
 // ******************************************************************************
 
@@ -331,4 +307,47 @@ where
         }).boxed_local();
         s
     }
+}
+
+/**
+* Factory implementations
+*
+*/
+impl<T, R, O> Factory<(), R, O> for T 
+where
+    T: Fn() -> R + Clone + 'static,
+    R: Future<Output=O>,
+    O: Responder 
+{
+    fn call(&self, _: ()) -> R {
+        (self)()
+    }
+}
+
+/// FromRequest trait impl for tuples
+macro_rules! factory_tuple ({ $(($n:tt, $T:ident)),+} => {
+    impl<Func, $($T,)+ Res, O> Factory<($($T,)+), Res, O> for Func
+    where Func: Fn($($T,)+) -> Res + Clone + 'static,
+          Res: Future<Output = O>,
+          O: Responder,
+    {
+        fn call(&self, param: ($($T,)+)) -> Res {
+            (self)($(param.$n,)+)
+        }
+    }
+});
+
+#[rustfmt::skip]
+mod m {
+    use super::*;
+    factory_tuple!((0, A));
+    factory_tuple!((0, A), (1, B));
+    factory_tuple!((0, A), (1, B), (2, C));
+    factory_tuple!((0, A), (1, B), (2, C), (3, D));
+    factory_tuple!((0, A), (1, B), (2, C), (3, D), (4, E));
+    factory_tuple!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F));
+    factory_tuple!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G));
+    factory_tuple!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G), (7, H));
+    factory_tuple!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G), (7, H), (8, I));
+    factory_tuple!((0, A), (1, B), (2, C), (3, D), (4, E), (5, F), (6, G), (7, H), (8, I), (9, J));
 }
