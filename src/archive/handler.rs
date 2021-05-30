@@ -6,7 +6,7 @@ use futures_util::{FutureExt, ready as _ready};
 use std::{future::{Ready, ready}, pin::Pin, task::Poll};
 
 use crate::responder::Responder;
-use crate::service::BoxedRouteService;
+use crate::route::BoxedRouteService;
 use crate::extract::FromRequest;
 use loony_service::{Service, ServiceFactory};
 use crate::service::{ServiceRequest, ServiceResponse};
@@ -277,7 +277,10 @@ where
 
     fn call(&mut self, req: Self::Request) -> Self::Future {
         let a = &mut self.factory;
-        Box::pin(a.call(req))
+        let b = block_on(a.call(req));
+        let c = ready(b);
+        let d = Box::pin(c);
+        d
     }
 }
 // ******************************************************************************
