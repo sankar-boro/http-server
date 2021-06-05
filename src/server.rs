@@ -1,6 +1,6 @@
 use ahash::AHashMap;
 use async_std::task::block_on;
-use loony_service::{IntoServiceFactory, Service, ServiceFactory};
+use s4nk4r_service::{IntoServiceFactory, Service, ServiceFactory};
 use crate::{App, builder::Builder, config::AppService, connection::Connection, extensions::Extensions, request::{EMPTY_HEADER, HttpRequest, Request}, resource::ResourceService, response::Response, service::{AppServiceFactory, ServiceRequest}};
 use std::{cell::{RefCell}, net::TcpStream, rc::Rc, sync::mpsc::Receiver};
 

@@ -4,7 +4,7 @@ use super::AppState;
 use crate::app_service::AppInit;
 use crate::{config::{AppService, ServiceConfig}, extensions::Extensions, resource::{Resource, ResourceService}, route::Route, service::{AppServiceFactory, HttpServiceFactory}};
 use futures::executor::block_on;
-use loony_service::IntoServiceFactory;
+use s4nk4r_service::IntoServiceFactory;
 
 pub trait Builder {
     type Product;

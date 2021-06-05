@@ -8,7 +8,7 @@ use std::{future::{Ready, ready}, pin::Pin, task::Poll};
 use crate::responder::Responder;
 use crate::route::BoxedRouteService;
 use crate::extract::FromRequest;
-use loony_service::{Service, ServiceFactory};
+use s4nk4r_service::{Service, ServiceFactory};
 use crate::service::{ServiceRequest, ServiceResponse};
 
 // ******************************************************************************

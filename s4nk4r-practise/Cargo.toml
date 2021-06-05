@@ -1,5 +1,5 @@
 [package]
-name = "loony-service"
+name = "s4nk4r-practise"
 version = "0.1.0"
 authors = ["Sankar boro <sankar.boro@yahoo.com>"]
 edition = "2018"
@@ -7,5 +7,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-futures = "0.3"
-pin-project = "1.0.1"
+regex = "1.5.4"
+
+[[example]]
+name = "string"
+path = "examples/strings/string.rs"

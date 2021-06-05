@@ -577,14 +577,14 @@ dependencies = [
  "fxhash",
  "http",
  "httparse",
- "loony-futures",
- "loony-http",
- "loony-macro",
- "loony-practise",
- "loony-service",
- "loony-test",
  "multipart",
  "pin-project",
+ "s4nk4r-futures",
+ "s4nk4r-http",
+ "s4nk4r-macro",
+ "s4nk4r-practise",
+ "s4nk4r-service",
+ "s4nk4r-test",
  "scylla",
  "socket2 0.4.0",
  "tokio",
@@ -728,50 +728,6 @@ checksum = "51b9bbe6c47d51fc3e1a9b945965946b4c44142ab8792c50835a980d362c2710"
 dependencies = [
  "cfg-if 1.0.0",
  "value-bag",
-]
-
-[[package]]
-name = "loony-futures"
-version = "0.1.0"
-dependencies = [
- "async-std",
- "futures",
-]
-
-[[package]]
-name = "loony-http"
-version = "0.1.0"
-
-[[package]]
-name = "loony-macro"
-version = "0.1.0"
-
-[[package]]
-name = "loony-practise"
-version = "0.1.0"
-dependencies = [
- "regex",
-]
-
-[[package]]
-name = "loony-service"
-version = "0.1.0"
-dependencies = [
- "futures",
- "pin-project",
-]
-
-[[package]]
-name = "loony-test"
-version = "0.1.0"
-dependencies = [
- "async-std",
- "futures-util",
- "fxhash",
- "loony-service",
- "mio",
- "pin-project",
- "tokio",
 ]
 
 [[package]]
@@ -1454,6 +1410,50 @@ name = "ryu"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "71d301d4193d031abdd79ff7e3dd721168a9572ef3fe51a1517aba235bd8f86e"
+
+[[package]]
+name = "s4nk4r-futures"
+version = "0.1.0"
+dependencies = [
+ "async-std",
+ "futures",
+]
+
+[[package]]
+name = "s4nk4r-http"
+version = "0.1.0"
+
+[[package]]
+name = "s4nk4r-macro"
+version = "0.1.0"
+
+[[package]]
+name = "s4nk4r-practise"
+version = "0.1.0"
+dependencies = [
+ "regex",
+]
+
+[[package]]
+name = "s4nk4r-service"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "pin-project",
+]
+
+[[package]]
+name = "s4nk4r-test"
+version = "0.1.0"
+dependencies = [
+ "async-std",
+ "futures-util",
+ "fxhash",
+ "mio",
+ "pin-project",
+ "s4nk4r-service",
+ "tokio",
+]
 
 [[package]]
 name = "safemem"

@@ -16,7 +16,7 @@ use crate::{config::AppService, route::{
   }};
 use async_std::task::block_on;
 use futures::{Future, FutureExt};
-use loony_service::{ServiceFactory, Service};
+use s4nk4r_service::{ServiceFactory, Service};
 
 pub struct Resource {
   scope: String,
@@ -130,7 +130,7 @@ mod tests {
     use crate::service::AppServiceFactory;
     use crate::service::ServiceRequest;
     use crate::resource::Resource;
-    use loony_service::Service;
+    use s4nk4r_service::Service;
     use std::rc::Rc;
     use crate::config::AppService;
 

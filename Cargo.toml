@@ -8,23 +8,23 @@ version = "0.1.0"
 
 [workspace]
 members = [
-  "loony-http",
-  # "loony-server",
-  "loony-test",
-  "loony-service",
-  "loony-futures", 
-  "loony-macro",
-  "loony-practise",
+  "s4nk4r-http",
+  # "s4nk4r-server",
+  "s4nk4r-test",
+  "s4nk4r-service",
+  "s4nk4r-futures", 
+  "s4nk4r-macro",
+  "s4nk4r-practise",
 ]
 
 [dependencies]
-loony-http = {path = "./loony-http"}
-loony-test = {path = "./loony-test"}
-loony-macro = {path = "./loony-macro"}
-loony-service = {path = "./loony-service"}
-# loony-server = {path = "./loony-server"}
-loony-futures = {path = "./loony-futures"}
-loony-practise = {path = "./loony-practise"}
+s4nk4r-http = {path = "./s4nk4r-http"}
+s4nk4r-test = {path = "./s4nk4r-test"}
+s4nk4r-macro = {path = "./s4nk4r-macro"}
+s4nk4r-service = {path = "./s4nk4r-service"}
+# s4nk4r-server = {path = "./s4nk4r-server"}
+s4nk4r-futures = {path = "./s4nk4r-futures"}
+s4nk4r-practise = {path = "./s4nk4r-practise"}
 fxhash = "0.2.1"
 http = "0.2.1"
 futures = "0.3.8"

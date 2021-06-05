@@ -3,7 +3,7 @@ use std::{
     task::{Context, Poll},
     pin::Pin
 };
-use loony_service::{
+use s4nk4r_service::{
     Service,
     ServiceFactory
 };

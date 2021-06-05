@@ -1,5 +1,5 @@
 use async_std::task::block_on;
-use loony_service::{ServiceFactory};
+use s4nk4r_service::{ServiceFactory};
 use crate::{config::AppService, resource::{Resource, ResourceService, CreateResourceService}, route::Route, service::{AppServiceFactory, HttpServiceFactory, ServiceRequest, ServiceResponse}};
 
 pub type BoxedResourceServiceFactory = Box<

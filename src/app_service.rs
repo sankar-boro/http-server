@@ -1,6 +1,6 @@
 use futures::future::ready;
 use futures::{Future, future::Ready};
-use loony_service::{ServiceFactory, Service};
+use s4nk4r_service::{ServiceFactory, Service};
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::task::Poll;
