@@ -89,6 +89,14 @@ pub struct UserResponse {
 	lname: String,
 }
 
+#[derive(Serialize)]
+pub struct User {
+    userId: String,
+	email: String,
+	fname: String,
+	lname: String,
+}
+
 pub async fn get_all(app: web::Data<DB>) -> String {
     let session = app.0.session.as_ref();
     let a = session.query("SELECT userId, email, password, fname, lname from sankar.userCredentials", &[]).await.unwrap();
@@ -97,16 +105,14 @@ pub async fn get_all(app: web::Data<DB>) -> String {
             .map(|a| a.unwrap())
             .collect::<Vec<UserResponse>>()
     }).unwrap();
-    let b = b.iter().map(|_a| {
-        let u = json!({
-            "name": format!("{} {}", _a.fname.clone(), _a.lname.clone()),
-            "email": _a.email,
-            "userId": _a.userId.to_string(),
-        });
-        u.to_string()			
-	}).reduce(|a, b| {
-            format!("{} {}", a, b)
-        }).unwrap();
-    
-    b
+    let b: Vec<User> = b.iter().map(|_a| {
+        User {
+            fname: _a.fname.clone(),
+            lname: _a.fname.clone(),
+            email: _a.email.clone(),
+            userId: _a.userId.to_string(),
+        }
+    }).collect();
+    let t = serde_json::to_string(&b).unwrap();
+    t
 }
