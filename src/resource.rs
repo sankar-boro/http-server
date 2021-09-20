@@ -146,7 +146,7 @@ mod tests {
       let mut rs = rs.route(r);
       let mut a_ser = AppService::new();
       rs.register(&mut a_ser);
-      let sr = ServiceRequest(HttpRequest { url: "/home".to_string(), extensions: Rc::new(Extensions::new()) });
+      let sr = ServiceRequest(HttpRequest { url: "/home".to_string(), extensions: Rc::new(Extensions::new()), params: None });
       let mut a= rs.route_service.borrow_mut();
       if let Some(mut c) = a.take() {
         c.call(sr);

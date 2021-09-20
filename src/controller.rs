@@ -56,14 +56,24 @@ fn writer<W: Write>(f: &mut W, s: &str) -> Result<(), Error> {
     f.write_fmt(format_args!("{}", s))
 }
 
-pub async fn get_user(app: web::Data<DB>) -> String {
+pub async fn get_user(app: web::Data<DB>, params: String) -> String {
+    let _params: Vec<&str> = params.split("=").collect();
+    if _params.len() != 2 {
+        return "User not found".to_string();
+    }
     let session = app.0.session.as_ref();
-    let mut data = String::new();
-    if let Some(rows) = session.query("SELECT email FROM sankar.userCredentials", &[]).await.unwrap().rows {
+    let mut data = String::from("");
+    if let Some(rows) = session.query(format!("SELECT userid, fname, lname, email FROM sankar.userCredentials WHERE email='{}'", _params[1].clone()), &[]).await.unwrap().rows {
         // Parse each row as a tuple containing single i32
-        for row in rows.into_typed::<(String,)>() {
-            let read_row: (String,) = row.unwrap();
-            data.push_str(&read_row.0);
+        for row in rows.into_typed::<(Uuid,String,String,String)>() {
+            let read_row: (Uuid,String,String,String) = row.unwrap();
+            data.push_str(&read_row.0.to_string());
+            data.push_str(" ");
+            data.push_str(&read_row.1);
+            data.push_str(" ");
+            data.push_str(&read_row.2);
+            data.push_str(" ");
+            data.push_str(&read_row.3);
             data.push_str("\n");
         }
     }

@@ -24,13 +24,16 @@ impl<'a> Response<'a> {
 
     pub fn build(&self, req: &Request) -> Result<String, ()> {
         if let Some(path) = &req.uri {
-            let sp: Vec<&str> = path.split("?").collect();
-            println!("{:?}", sp);
-            let mut sp = sp.iter();
+            let main: Vec<&str> = path.split("?").collect();
+            let mut sp = main.iter();
             if let Some(prefix_uri) = sp.next() {
                 let service = self.routes.get(prefix_uri.to_owned());
+                let mut _params = Vec::new();
+                if main.len() == 2 {
+                    _params.push(main[1].clone().to_string());
+                }
                 if let Some(s) = service {
-                    let sr = ServiceRequest(HttpRequest { url: String::from(path), extensions: self.extensions.clone() });
+                    let sr = ServiceRequest(HttpRequest { url: String::from(path), extensions: self.extensions.clone(), params: Some(_params)  });
                     let mut a = Rc::clone(s);
                     let b = a.call(sr);
                     let c = block_on(b).unwrap();

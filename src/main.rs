@@ -82,6 +82,21 @@ impl FromRequest for (web::Data<DB>, ) {
     }
 }
 
+impl FromRequest for (web::Data<DB>, String,) {
+    type Future = Ready<Result<(web::Data<DB>, String,), ()>>;
+    fn from_request(req: &ServiceRequest) -> Self::Future {
+        let a = req.0.extensions.get::<DB>().unwrap();
+        let b = &req.0.params;
+        if let Some(b) = b {
+            if b.len() == 1  {
+                return ready(Ok((web::Data(a.clone()), b[0].clone(),)));
+            }
+        }
+
+        ready(Ok((web::Data(a.clone()), "".to_string(),)))
+    }
+}
+
 impl FromRequest for () {
     type Future = Ready<Result<(), ()>>;
     fn from_request(_: &ServiceRequest) -> Self::Future {

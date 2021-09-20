@@ -42,6 +42,18 @@ where
         (self)(PA)
     }
 }
+
+impl<T, PA, PB, R, O> Factory<(PA,PB), R, O> for T 
+where
+    T: Fn(PA,PB,) -> R + Clone + 'static,
+    // P: FromRequest,
+    R: Future<Output=O>,
+    O: Responder 
+{
+    fn call(&self, (PA,PB,): (PA,PB)) -> R {
+        (self)(PA, PB)
+    }
+}
 // ******************************************************************************
 
 pub struct Handler<T, P, R, O> 

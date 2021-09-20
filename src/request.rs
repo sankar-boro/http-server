@@ -95,5 +95,6 @@ fn get_version(buffer: &mut Iter<u8>, index: &mut usize) -> Option<(usize, usize
 #[derive(Clone)]
 pub struct HttpRequest {
     pub url: String,
+    pub params: Option<Vec<String>>,
     pub extensions: Rc<Extensions>
 }
