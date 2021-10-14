@@ -115,19 +115,48 @@ where
         }
     }
 }
+
+pub struct HandlerServiceResponseProjection<'pin, R, O> 
+where
+    R: Future<Output = O>,
+    O: Responder
+{
+    fut: Pin<&'pin mut R>,
+    fut2: Pin<&'pin mut Option<O::Future>>,
+    req: &'pin mut Option<ServiceRequest>
+}
+
 // ******************************************************************************
-#[pin_project]
+// #[pin_project]
 pub struct HandlerServiceResponse<R, O> 
 where
     R: Future<Output = O>,
     O: Responder
 {
-    #[pin]
+    // #[pin]
     fut: R,
-    #[pin]
+    // #[pin]
     fut2: Option<O::Future>,
     req: Option<ServiceRequest>
 }
+
+impl<R, O> HandlerServiceResponse<R, O> 
+where
+    R: Future<Output = O>,
+    O: Responder
+{
+    fn _project<'pin>(self: Pin<&'pin mut Self>) -> HandlerServiceResponseProjection<'pin, R, O> {
+        unsafe {
+            let Self {fut, fut2, req} = self.get_unchecked_mut();
+            HandlerServiceResponseProjection {
+                fut: Pin::new_unchecked(fut),
+                fut2: Pin::new_unchecked(fut2),
+                req
+            }
+        }
+    }
+}
+
 impl<R, O> Future for HandlerServiceResponse<R, O> 
 where 
     R: Future<Output = O>,
@@ -136,7 +165,7 @@ where
     type Output = Result<ServiceResponse, ()>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
-        let this = self.as_mut().project();
+        let this = self.as_mut()._project();
         if let Some(fut) = this.fut2.as_pin_mut() {
             return match fut.poll(cx) {
                 Poll::Ready(res) => {
@@ -148,7 +177,7 @@ where
         match this.fut.poll(cx) {
             Poll::Ready(res) => {
                 let fut = res.respond(this.req.as_ref().unwrap());
-                self.as_mut().project().fut2.set(Some(fut));
+                self.as_mut()._project().fut2.set(Some(fut));
                 self.poll(cx)
             },
             Poll::Pending => Poll::Pending,
