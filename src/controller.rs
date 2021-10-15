@@ -1,16 +1,14 @@
 use crate::DB;
-use crate::app::App;
 use crate::web;
-use scylla::{IntoTypedRows};
-use std::fmt::{Error, Write};
-use scylla::frame::response::cql_to_rust::FromRow;
-use scylla::macros::FromRow;
-use serde::{Serialize, Deserialize};
-use scylla::transport::errors::QueryError;
+use uuid::Uuid;
+use serde::{Serialize};
 use scylla::QueryResult;
 use derive_more::{Display};
-use serde_json::json;
-use uuid::Uuid;
+use scylla::{IntoTypedRows};
+use std::fmt::{Error, Write};
+use scylla::macros::FromRow;
+use scylla::transport::errors::QueryError;
+use scylla::frame::response::cql_to_rust::FromRow;
 
 
 #[derive(Display, Debug)]
@@ -81,6 +79,7 @@ pub async fn get_user(app: web::Data<DB>, params: String) -> String {
 }
 
 #[derive(Serialize, FromRow)]
+#[allow(non_snake_case)]
 pub struct UserResponse {
     userId: Uuid,
 	email: String,
@@ -90,6 +89,7 @@ pub struct UserResponse {
 }
 
 #[derive(Serialize)]
+#[allow(non_snake_case)]
 pub struct User {
     userId: String,
 	email: String,

@@ -1,7 +1,14 @@
 use ahash::AHashMap;
+use crate::{App, 
+    builder::Builder, 
+    response::Response,
+    connection::Connection, 
+    extensions::Extensions, 
+    resource::ResourceService, 
+    request::{EMPTY_HEADER, Request}, 
+};
 use async_std::task::block_on;
-use s4nk4r_service::{IntoServiceFactory, Service, ServiceFactory};
-use crate::{App, builder::Builder, config::AppService, connection::Connection, extensions::Extensions, request::{EMPTY_HEADER, HttpRequest, Request}, resource::ResourceService, response::Response, service::{AppServiceFactory, ServiceRequest}};
+use s4nk4r_service::{IntoServiceFactory, ServiceFactory};
 use std::{cell::{RefCell}, net::TcpStream, rc::Rc, sync::mpsc::Receiver};
 
 static RES_OK: &str = "HTTP/1.1 200 OK\r\n\r\n";

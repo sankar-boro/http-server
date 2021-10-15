@@ -11,7 +11,6 @@ use crate::extract::FromRequest;
 use s4nk4r_service::{Service, ServiceFactory};
 use crate::service::{ServiceRequest, ServiceResponse};
 
-// ******************************************************************************
 pub trait Factory<P, R, O>: Clone + 'static 
 where 
     R: Future<Output=O>, 
@@ -34,27 +33,24 @@ where
 impl<T, PA, R, O> Factory<(PA,), R, O> for T 
 where
     T: Fn(PA,) -> R + Clone + 'static,
-    // P: FromRequest,
     R: Future<Output=O>,
     O: Responder 
 {
-    fn call(&self, (PA,): (PA,)) -> R {
-        (self)(PA)
+    fn call(&self, (pa,): (PA,)) -> R {
+        (self)(pa)
     }
 }
 
 impl<T, PA, PB, R, O> Factory<(PA,PB), R, O> for T 
 where
     T: Fn(PA,PB,) -> R + Clone + 'static,
-    // P: FromRequest,
     R: Future<Output=O>,
     O: Responder 
 {
-    fn call(&self, (PA,PB,): (PA,PB)) -> R {
-        (self)(PA, PB)
+    fn call(&self, (pa,pb,): (PA,PB)) -> R {
+        (self)(pa, pb)
     }
 }
-// ******************************************************************************
 
 pub struct Handler<T, P, R, O> 
 where
@@ -126,16 +122,12 @@ where
     req: &'pin mut Option<ServiceRequest>
 }
 
-// ******************************************************************************
-// #[pin_project]
 pub struct HandlerServiceResponse<R, O> 
 where
     R: Future<Output = O>,
     O: Responder
 {
-    // #[pin]
     fut: R,
-    // #[pin]
     fut2: Option<O::Future>,
     req: Option<ServiceRequest>
 }
@@ -185,7 +177,6 @@ where
     }
 }
 
-// ******************************************************************************
 pub struct Extract<T: FromRequest, S> {
     service: S,
     _t: PhantomData<T>
@@ -224,7 +215,7 @@ where
         ready(Ok(a))
     }
 }
-// ******************************************************************************
+
 pub struct ExtractService<T, S> {
     service: S,
     _t: PhantomData<T>
@@ -252,7 +243,7 @@ where
         }
     }
 }
-// ******************************************************************************
+
 #[pin_project]
 pub struct ExtractResponse <T: FromRequest, S: Service> {
     req: ServiceRequest,
@@ -297,7 +288,6 @@ where
     }
 }
 
-// ******************************************************************************
 struct RouteHandlerService<T: Service> {
     factory:T 
 }
@@ -324,7 +314,7 @@ where
         d
     }
 }
-// ******************************************************************************
+
 pub struct RouteServiceFactory<T> 
 where
     T: ServiceFactory<Request = ServiceRequest>
@@ -342,7 +332,7 @@ where
         }
     }
 }
-// ******************************************************************************
+
 impl<T> ServiceFactory for RouteServiceFactory<T> 
 where
     T: ServiceFactory<

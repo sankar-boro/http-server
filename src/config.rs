@@ -1,6 +1,9 @@
 use std::rc::Rc;
 use std::cell::RefCell;
-use crate::{resource::ResourceService, scope::Scope, service::{AppServiceFactory, HttpServiceFactory, ServiceFactoryWrapper}};
+use crate::{
+  resource::ResourceService, 
+  service::{AppServiceFactory, HttpServiceFactory, ServiceFactoryWrapper}
+};
 
 pub struct ServiceConfig {
   pub services:Vec<Box<dyn AppServiceFactory>>,

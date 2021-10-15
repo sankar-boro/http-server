@@ -1,8 +1,12 @@
 use std::{borrow::Borrow, cell::RefCell, rc::Rc};
-
 use super::AppState;
 use crate::app_service::AppInit;
-use crate::{config::{AppService, ServiceConfig}, extensions::Extensions, resource::{Resource, ResourceService}, route::Route, service::{AppServiceFactory, HttpServiceFactory}};
+use crate::{
+    config::{AppService, ServiceConfig}, 
+    extensions::Extensions, 
+    resource::{Resource, ResourceService}, 
+    route::Route, service::{AppServiceFactory, HttpServiceFactory}
+};
 use futures::executor::block_on;
 use s4nk4r_service::IntoServiceFactory;
 
@@ -70,7 +74,7 @@ mod tests {
     use crate::controller;
     use crate::route::Route;
 
-    async fn index(req: DB) -> String {
+    async fn index(_: DB) -> String {
         String::from("")
     }
 

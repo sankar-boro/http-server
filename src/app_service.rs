@@ -1,16 +1,13 @@
-use futures::future::ready;
-use futures::{Future, future::Ready};
-use s4nk4r_service::{ServiceFactory, Service};
 use std::rc::Rc;
-use std::cell::RefCell;
-use std::task::Poll;
-
 use crate::AppState;
+use std::cell::RefCell;
+use futures::future::ready;
+use futures::{future::Ready};
 use crate::config::AppService;
 use crate::extensions::Extensions;
-use crate::resource::Resource;
 use crate::resource::ResourceService;
-use crate::service::{AppServiceFactory, ServiceRequest, ServiceResponse};
+use crate::service::{AppServiceFactory};
+use s4nk4r_service::{ServiceFactory, Service};
 
 pub struct AppInit {
     pub services: Rc<RefCell<Vec<Box<dyn AppServiceFactory>>>>,
@@ -60,7 +57,7 @@ impl Service for AppHttpService {
 
     type Future = Ready<Result<(), ()>>;
 
-    fn call(&mut self, req: Self::Request) -> Self::Future {
+    fn call(&mut self, _: Self::Request) -> Self::Future {
         ready(Ok(()))
     }
 }

@@ -1,6 +1,10 @@
-use async_std::task::block_on;
 use s4nk4r_service::{ServiceFactory};
-use crate::{config::AppService, resource::{Resource, ResourceService, CreateResourceService}, route::Route, service::{AppServiceFactory, HttpServiceFactory, ServiceRequest, ServiceResponse}};
+use crate::{
+    route::Route, 
+    config::AppService, 
+    resource::{Resource, ResourceService, CreateResourceService}, 
+    service::{AppServiceFactory, HttpServiceFactory, ServiceRequest, ServiceResponse}
+};
 
 pub type BoxedResourceServiceFactory = Box<
     dyn ServiceFactory<
