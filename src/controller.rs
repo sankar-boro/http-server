@@ -1,5 +1,5 @@
 use crate::DB;
-use crate::web;
+use crate::app;
 use uuid::Uuid;
 use serde::{Serialize};
 use scylla::QueryResult;
@@ -54,7 +54,7 @@ fn writer<W: Write>(f: &mut W, s: &str) -> Result<(), Error> {
     f.write_fmt(format_args!("{}", s))
 }
 
-pub async fn get_user(app: web::Data<DB>, params: String) -> String {
+pub async fn get_user(app: app::Data<DB>, params: String) -> String {
     let _params: Vec<&str> = params.split("=").collect();
     if _params.len() != 2 {
         return "User not found".to_string();
@@ -97,7 +97,7 @@ pub struct User {
 	lname: String,
 }
 
-pub async fn get_all(app: web::Data<DB>) -> String {
+pub async fn get_all(app: app::Data<DB>) -> String {
     let session = app.0.session.as_ref();
     let a = session.query("SELECT userId, email, password, fname, lname from sankar.userCredentials", &[]).await.unwrap();
     let b = a.rows.map(|rows| {

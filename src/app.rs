@@ -2,6 +2,7 @@ use std::{borrow::Borrow, cell::RefCell, rc::Rc};
 use super::AppState;
 use crate::app_service::AppInit;
 use crate::{
+    route,
     config::{AppService, ServiceConfig}, 
     extensions::Extensions, 
     resource::{Resource, ResourceService}, 
@@ -10,9 +11,8 @@ use crate::{
 use futures::executor::block_on;
 use s4nk4r_service::IntoServiceFactory;
 
-pub trait Builder {
-    type Product;
-}
+#[derive(Clone)]
+pub struct Data<T>(pub T);
 
 pub struct App {
     app_data:AppState,
@@ -70,7 +70,7 @@ impl IntoServiceFactory<AppInit> for App {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{App, DB, web};
+    use crate::{App, DB};
     use crate::controller;
     use crate::route::Route;
 
@@ -83,9 +83,9 @@ mod tests {
         let app = App::new()
         .configure(|cfg: &mut ServiceConfig| {
             cfg.service(
-                    web::scope("/user")
-                    .route(Route::new("/user").route(controller::get_user))
-                    .route(Route::new("/delete").route(controller::get_user))
+                    route::scope("/user")
+                    .route(Route::new("/user").to(controller::get_user))
+                    .route(Route::new("/delete").to(controller::get_user))
                 );
         });
         // .route(web::get("/").route(index));

@@ -1,14 +1,14 @@
 use ahash::AHashMap;
+use async_std::task::block_on;
+use s4nk4r_service::{IntoServiceFactory, ServiceFactory};
 use crate::{App, 
     builder::Builder, 
-    response::Response,
     connection::Connection, 
     extensions::Extensions, 
     resource::ResourceService, 
     request::{EMPTY_HEADER, Request}, 
+    response::Response
 };
-use async_std::task::block_on;
-use s4nk4r_service::{IntoServiceFactory, ServiceFactory};
 use std::{cell::{RefCell}, net::TcpStream, rc::Rc, sync::mpsc::Receiver};
 
 static RES_OK: &str = "HTTP/1.1 200 OK\r\n\r\n";

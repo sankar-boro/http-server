@@ -141,7 +141,7 @@ mod tests {
     #[test]
     fn resource() {
       let r = Route::new("/home");
-      let r = r.route(index);
+      let r = r.to(index);
       let rs = Resource::new("".to_string());
       let mut rs = rs.route(r);
       let mut a_ser = AppService::new();

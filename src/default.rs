@@ -1,6 +1,6 @@
 use crate::DB;
-use crate::web;
+use crate::app;
 
-pub async fn default(_: web::Data<DB>) -> String {
+pub async fn default(_: app::Data<DB>) -> String {
   String::from("Hello World!")
 }

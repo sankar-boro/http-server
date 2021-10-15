@@ -8,6 +8,7 @@ use s4nk4r_service::{
     ServiceFactory
 };
 use crate::{
+    scope::Scope,
     FromRequest,
     default::default,
     responder::Responder,
@@ -42,6 +43,13 @@ pub type BoxedRouteServiceFactory = Box<
     >
 >;
 
+
+pub type BoxService = Pin<
+    Box<
+        dyn Future<Output=Result<BoxedRouteService, ()>>
+    >
+>;
+
 // #[derive(Clone)]
 pub struct Route {
     pub path: String,
@@ -58,7 +66,7 @@ impl<'route> Route {
         }
     }
 
-    pub fn route<T, P, R, O>(mut self, factory: T) -> Self 
+    pub fn to<T, P, R, O>(mut self, factory: T) -> Self 
     where 
         T: Factory<P, R, O> + Clone + 'static, 
         P: FromRequest + 'static,
@@ -77,11 +85,6 @@ impl<'route> Route {
     }
 }
 
-pub type BoxService = Pin<
-    Box<
-        dyn Future<Output=Result<BoxedRouteService, ()>>
-    >
->;
 #[pin_project::pin_project]
 pub struct RouteFutureService {
     #[pin]
@@ -147,17 +150,21 @@ pub fn get(path: &str) -> Route {
 pub fn post(path: &str) -> Route {
     method(path, Method::POST)
 }
+
+pub fn scope(scope: &str) -> Scope {
+  Scope::new(scope)
+}
+
 #[cfg(test)]
 mod tests {
     use futures::{FutureExt, executor::block_on};
-
     use crate::request::HttpRequest;
-
     use super::*;
 
     async fn index(_: String) -> String {
         "Hello World!".to_string()
     }
+
     #[test]
     fn route() {
         // let sr = ServiceRequest(HttpRequest { url: "/home".to_string(), extensions: &Extensions::new() });

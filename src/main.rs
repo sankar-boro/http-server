@@ -7,7 +7,6 @@ mod handler;
 mod route;
 mod controller;
 mod extensions;
-mod web;
 mod builder;
 mod scope;
 mod resource;
@@ -48,11 +47,11 @@ async fn index() -> impl Responder {
 
 fn routes(config: &mut ServiceConfig) {
     config.service(
-        web::scope("/user")
-        .route(route::get("/all").route(controller::get_all))
-        .route(route::get("/get::userid").route(controller::get_user)) // expects an url of /user/get/one?userid=<somevalue>
-        .route(route::get("/delete::userid").route(controller::get_user)) // expects an url of /user/get/one?userid=<somevalue>
-        .route(route::get("/update::userid").route(controller::get_user)) // expects an url of /user/get/one?userid=<somevalue>
+        route::scope("/user")
+        .route(route::get("/all").to(controller::get_all))
+        .route(route::get("/get::userid").to(controller::get_user)) // expects an url of /user/get/one?userid=<somevalue>
+        .route(route::get("/delete::userid").to(controller::get_user)) // expects an url of /user/get/one?userid=<somevalue>
+        .route(route::get("/update::userid").to(controller::get_user)) // expects an url of /user/get/one?userid=<somevalue>
     );
 }
 
@@ -66,34 +65,34 @@ pub struct DB {
     session: Arc<Session>,
 }
 
-impl FromRequest for web::Data<DB> {
-    type Future = Ready<Result<web::Data<DB>, ()>>;
+impl FromRequest for app::Data<DB> {
+    type Future = Ready<Result<app::Data<DB>, ()>>;
     fn from_request(req: &ServiceRequest) -> Self::Future {
         let a = req.0.extensions.get::<DB>().unwrap();
-        ready(Ok(web::Data(a.clone())))
+        ready(Ok(app::Data(a.clone())))
     }
 }
 
-impl FromRequest for (web::Data<DB>, ) {
-    type Future = Ready<Result<(web::Data<DB>, ), ()>>;
+impl FromRequest for (app::Data<DB>, ) {
+    type Future = Ready<Result<(app::Data<DB>, ), ()>>;
     fn from_request(req: &ServiceRequest) -> Self::Future {
         let a = req.0.extensions.get::<DB>().unwrap();
-        ready(Ok((web::Data(a.clone()), )))
+        ready(Ok((app::Data(a.clone()), )))
     }
 }
 
-impl FromRequest for (web::Data<DB>, String,) {
-    type Future = Ready<Result<(web::Data<DB>, String,), ()>>;
+impl FromRequest for (app::Data<DB>, String,) {
+    type Future = Ready<Result<(app::Data<DB>, String,), ()>>;
     fn from_request(req: &ServiceRequest) -> Self::Future {
         let a = req.0.extensions.get::<DB>().unwrap();
         let b = &req.0.params;
         if let Some(b) = b {
             if b.len() == 1  {
-                return ready(Ok((web::Data(a.clone()), b[0].clone(),)));
+                return ready(Ok((app::Data(a.clone()), b[0].clone(),)));
             }
         }
 
-        ready(Ok((web::Data(a.clone()), "".to_string(),)))
+        ready(Ok((app::Data(a.clone()), "".to_string(),)))
     }
 }
 
@@ -133,7 +132,7 @@ async fn main() {
         })
         .data(db.clone())
         .configure(routes)
-        .route(web::get("/").route(index))
+        .route(route::get("/").to(index))
     )
     .run();
 }   
