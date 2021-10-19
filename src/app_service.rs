@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use ahash::AHashMap;
 use crate::AppState;
 use std::cell::RefCell;
 use futures::future::ready;
@@ -12,7 +13,7 @@ use s4nk4r_service::{ServiceFactory, Service};
 pub struct AppInit {
     pub services: Rc<RefCell<Vec<Box<dyn AppServiceFactory>>>>,
     pub app_data: AppState,
-    pub extensions: Extensions,
+    pub extensions: RefCell<Option<Extensions>>,
 }
 
 impl ServiceFactory for AppInit {
@@ -37,15 +38,28 @@ impl ServiceFactory for AppInit {
         .for_each(|mut srv| srv.register(&mut config));
 
         let services = config.into_services();
-        
+        let mut routes = AHashMap::new();
+        services.iter().for_each(|f| {
+            let g = Rc::clone(f);
+            let h = g.as_ref().borrow();
+            let i = h.route_name.clone();
+            routes.insert(i, Rc::clone(&g));
+        });
+        let new_ext = self
+            .extensions
+            .borrow_mut()
+            .take()
+            .unwrap_or_else(Extensions::new);
         ready(Ok(AppHttpService {
-            services,
+            routes,
+            extensions: new_ext
         }))
     }
 }
  
 pub struct AppHttpService {
-    pub(crate) services: Vec<Rc<RefCell<ResourceService>>>
+    pub(crate) routes: AHashMap<String, Rc<RefCell<ResourceService>>>,
+    pub(crate) extensions: Extensions,
 }
 
 impl Service for AppHttpService {

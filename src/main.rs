@@ -18,6 +18,7 @@ mod request;
 mod service;
 mod extract;
 mod app_service;
+mod http_service;
 
 use config::ServiceConfig;
 use app::App;

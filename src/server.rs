@@ -1,50 +1,51 @@
 use ahash::AHashMap;
 use async_std::task::block_on;
 use s4nk4r_service::{IntoServiceFactory, ServiceFactory};
-use crate::{App, 
-    builder::Builder, 
-    connection::Connection, 
-    extensions::Extensions, 
-    resource::ResourceService, 
-    request::{EMPTY_HEADER, Request}, 
-    response::Response
-};
-use std::{cell::{RefCell}, net::TcpStream, rc::Rc, sync::mpsc::Receiver};
+use crate::{App, app_service::AppHttpService, builder::Builder, config::ServiceConfig, connection::Connection, extensions::Extensions, request::{EMPTY_HEADER, Request}, resource::ResourceService, response::Response};
+use std::{cell::{RefCell}, marker::PhantomData, net::TcpStream, rc::Rc, sync::mpsc::Receiver};
 
 static RES_OK: &str = "HTTP/1.1 200 OK\r\n\r\n";
 static RES_NF: &str = "HTTP/1.1 401 NOT FOUND\r\n\r\nNOT FOUND";
 
 pub type AppInstance = Box<dyn Fn() -> App + 'static>;
-pub struct HttpServer {
-    app: AppInstance,
+pub struct HttpServer<F, I, T> 
+where F: Fn() -> I + Send + Clone + 'static,
+I: IntoServiceFactory<T>,
+T: ServiceFactory,
+{
+    app: F,
     builder: Builder,
     routes: AHashMap<String, Rc<RefCell<ResourceService>>>,
     extensions: Rc<Extensions>,
+    _p: PhantomData<T>
 }
 
-impl HttpServer {
-    pub fn new<F: Fn() -> App + 'static>(app: F) -> Self {
+
+impl<F, I, T> HttpServer<F, I, T> 
+where F: Fn() -> I + Send + Clone + 'static,
+    I: IntoServiceFactory<T>,
+    T: ServiceFactory<Request=(), Config = (), Service = AppHttpService>,
+{
+    pub fn new(app: F) -> Self {
         Self { 
-            app: Box::new(app), 
+            app, 
             builder: Builder::new(),
             routes: AHashMap::new(),
-            extensions: Rc::new(Extensions::new())
+            extensions: Rc::new(Extensions::new()),
+            _p: PhantomData,
         }
     }
 
     fn start(&mut self) {
         let app = (self.app)();
-        let a = app.into_factory();
-        let b = a.new_service(());
-        let c = block_on(b).unwrap();
-        let d = c.services;
-        d.iter().for_each(|f| {
-            let g = Rc::clone(f);
-            let h = g.as_ref().borrow();
-            let i = h.route_name.clone();
-            self.routes.insert(i, Rc::clone(&g));
-        });
-        self.extensions = Rc::new(a.extensions);
+        let app_factory = app.into_factory();
+        let app_service = app_factory.new_service(());
+        let http_service:Result<AppHttpService, <T as ServiceFactory>::InitError> = block_on(app_service);
+        if let Ok(http_service) = http_service {
+            let exts = http_service.extensions;
+            self.routes = http_service.routes;
+            self.extensions = Rc::new(exts);
+        };
     }
 
     pub fn run(&mut self) {

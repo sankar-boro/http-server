@@ -61,7 +61,7 @@ impl IntoServiceFactory<AppInit> for App {
         AppInit {
             services: Rc::new(RefCell::new(self.services)),
             app_data: self.app_data,
-            extensions: self.extensions,
+            extensions: RefCell::new(Some(self.extensions)),
         }
     }
 }
