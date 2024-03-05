@@ -1,15 +1,12 @@
 use crate::DB;
 use crate::app;
-use uuid::Uuid;
+use scylla::FromRow;
 use serde::Serialize;
 use scylla::QueryResult;
 use derive_more::Display;
 use scylla::IntoTypedRows;
 use std::fmt::{Error, Write};
-// use scylla::macros::FromRow;
-use scylla::FromRow;
 use scylla::transport::errors::QueryError;
-// use scylla::frame::response::cql_to_rust::FromRow;
 
 
 #[derive(Display, Debug)]
@@ -68,9 +65,15 @@ pub async fn get_user(app: app::Data<DB>, params: String) -> String {
     if _params.len() != 2 {
         return "User not found".to_string();
     }
-    let session = app.0.session.get().await.unwrap();
-    let data: String = String::from("");
-    data
+    let conn = app.0.session.get().await.unwrap();
+    let res = String::from("");
+    let rows = conn.query(
+        "SELECT * FROM users", 
+        &[]
+    ).await.unwrap();
+    let uid: i32 = rows[0].get(0);
+    println!("First user_id: {}", uid);
+    res
 }
 
 #[derive(Serialize, FromRow)]
@@ -93,7 +96,13 @@ pub struct User {
 }
 
 pub async fn get_all(app: app::Data<DB>) -> String {
-    let session = app.0.session.get().await.unwrap();
-    let data: String = String::from("");
-    data
+
+    let conn = app.0.session.get().await.unwrap();
+    let res = String::from("");
+    let rows = conn.query(
+        "SELECT * FROM users", 
+        &[]
+    ).await.unwrap();
+    let uid: i32 = rows[0].get(0);
+    format!("First user_id: {}", uid)
 }

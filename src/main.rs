@@ -28,8 +28,6 @@ use server::HttpServer;
 use service::ServiceRequest;
 use crate::responder::Responder;
 use std::fmt::{Error, Write};
-// use scylla::{ Session, SessionBuilder};
-use std::sync::Arc;
 use std::future::{Ready, ready};
 use extract::FromRequest;
 
