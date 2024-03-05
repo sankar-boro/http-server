@@ -20,13 +20,15 @@ mod extract;
 mod app_service;
 mod http_service;
 
+use connection::pg_connection;
 use config::ServiceConfig;
 use app::App;
+use deadpool_postgres::Pool;
 use server::HttpServer;
 use service::ServiceRequest;
 use crate::responder::Responder;
 use std::fmt::{Error, Write};
-use scylla::{ Session, SessionBuilder};
+// use scylla::{ Session, SessionBuilder};
 use std::sync::Arc;
 use std::future::{Ready, ready};
 use extract::FromRequest;
@@ -63,7 +65,7 @@ pub struct AppState {
 
 #[derive(Clone)]
 pub struct DB {
-    session: Arc<Session>,
+    pub session: Pool,
 }
 
 impl FromRequest for app::Data<DB> {
@@ -114,16 +116,11 @@ impl FromRequest for (String, ) {
 
 #[tokio::main]
 async fn main() {
-    let uri = std::env::var("SCYLLA_URI")
-        .unwrap_or_else(|_| "127.0.0.1:9042".to_string());
 
-    let session: Session = SessionBuilder::new()
-        .known_node(uri)
-        .build()
-        .await.unwrap();
+    let conn = pg_connection().await;
 
     let db = DB {
-        session: Arc::new(session),
+        session: conn,
     };
 
     HttpServer::new(move ||

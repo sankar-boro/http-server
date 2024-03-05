@@ -1,19 +1,28 @@
 use crate::DB;
 use crate::app;
 use uuid::Uuid;
-use serde::{Serialize};
+use serde::Serialize;
 use scylla::QueryResult;
-use derive_more::{Display};
-use scylla::{IntoTypedRows};
+use derive_more::Display;
+use scylla::IntoTypedRows;
 use std::fmt::{Error, Write};
-use scylla::macros::FromRow;
+// use scylla::macros::FromRow;
+use scylla::FromRow;
 use scylla::transport::errors::QueryError;
-use scylla::frame::response::cql_to_rust::FromRow;
+// use scylla::frame::response::cql_to_rust::FromRow;
 
 
 #[derive(Display, Debug)]
 pub struct AppError {
     message: String,
+}
+
+#[derive(FromRow)]
+pub struct GetUser {
+    user_id: i32, 
+    fname: String, 
+    lname: String, 
+    email: String
 }
 
 impl From<scylla::transport::errors::QueryError> for AppError {
@@ -59,29 +68,15 @@ pub async fn get_user(app: app::Data<DB>, params: String) -> String {
     if _params.len() != 2 {
         return "User not found".to_string();
     }
-    let session = app.0.session.as_ref();
-    let mut data = String::from("");
-    if let Some(rows) = session.query(format!("SELECT userid, fname, lname, email FROM sankar.userCredentials WHERE email='{}'", _params[1].clone()), &[]).await.unwrap().rows {
-        // Parse each row as a tuple containing single i32
-        for row in rows.into_typed::<(Uuid,String,String,String)>() {
-            let read_row: (Uuid,String,String,String) = row.unwrap();
-            data.push_str(&read_row.0.to_string());
-            data.push_str(" ");
-            data.push_str(&read_row.1);
-            data.push_str(" ");
-            data.push_str(&read_row.2);
-            data.push_str(" ");
-            data.push_str(&read_row.3);
-            data.push_str("\n");
-        }
-    }
+    let session = app.0.session.get().await.unwrap();
+    let data: String = String::from("");
     data
 }
 
 #[derive(Serialize, FromRow)]
 #[allow(non_snake_case)]
 pub struct UserResponse {
-    userId: Uuid,
+    userId: i32,
 	email: String,
 	password: Vec<u8>,
 	fname: String,
@@ -98,21 +93,7 @@ pub struct User {
 }
 
 pub async fn get_all(app: app::Data<DB>) -> String {
-    let session = app.0.session.as_ref();
-    let a = session.query("SELECT userId, email, password, fname, lname from sankar.userCredentials", &[]).await.unwrap();
-    let b = a.rows.map(|rows| {
-        rows.into_typed::<UserResponse>()
-            .map(|a| a.unwrap())
-            .collect::<Vec<UserResponse>>()
-    }).unwrap();
-    let b: Vec<User> = b.iter().map(|_a| {
-        User {
-            fname: _a.fname.clone(),
-            lname: _a.fname.clone(),
-            email: _a.email.clone(),
-            userId: _a.userId.to_string(),
-        }
-    }).collect();
-    let t = serde_json::to_string(&b).unwrap();
-    t
+    let session = app.0.session.get().await.unwrap();
+    let data: String = String::from("");
+    data
 }
