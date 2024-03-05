@@ -6,6 +6,7 @@ use scylla::QueryResult;
 use derive_more::Display;
 use scylla::IntoTypedRows;
 use std::fmt::{Error, Write};
+use crate::service::HttpResponse;
 use scylla::transport::errors::QueryError;
 
 
@@ -95,7 +96,7 @@ pub struct User {
 	lname: String,
 }
 
-pub async fn get_all(app: app::Data<DB>) -> String {
+pub async fn get_all(app: app::Data<DB>) -> HttpResponse {
 
     let conn = app.0.session.get().await.unwrap();
     let res = String::from("");
@@ -104,5 +105,7 @@ pub async fn get_all(app: app::Data<DB>) -> String {
         &[]
     ).await.unwrap();
     let uid: i32 = rows[0].get(0);
-    format!("First user_id: {}", uid)
+    // format!("First user_id: {}", uid)
+    // Ok(format!("First user_id: {}", uid))
+    HttpResponse{value: format!("HttpResponse from value. User Id: {}", uid)}
 }
