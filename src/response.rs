@@ -5,7 +5,7 @@ use crate::{
     extensions::Extensions,
 };
 use ahash::AHashMap;
-use s4nk4r_service::Service;
+use loony_service::Service;
 use std::{cell::RefCell,rc::Rc};
 use futures::executor::block_on;
 

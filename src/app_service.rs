@@ -8,7 +8,7 @@ use crate::config::AppService;
 use crate::extensions::Extensions;
 use crate::resource::ResourceService;
 use crate::service::{AppServiceFactory};
-use s4nk4r_service::{ServiceFactory, Service};
+use loony_service::{ServiceFactory, Service};
 
 pub struct AppInit {
     pub services: Rc<RefCell<Vec<Box<dyn AppServiceFactory>>>>,

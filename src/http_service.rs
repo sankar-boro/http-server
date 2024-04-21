@@ -1,4 +1,4 @@
-use s4nk4r_service::{IntoServiceFactory, ServiceFactory};
+use loony_service::{IntoServiceFactory, ServiceFactory};
 
 struct HttpService {
 

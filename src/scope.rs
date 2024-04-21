@@ -1,4 +1,4 @@
-use s4nk4r_service::{ServiceFactory};
+use loony_service::{ServiceFactory};
 use crate::{
     route::Route, 
     config::AppService, 

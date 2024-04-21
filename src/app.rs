@@ -9,7 +9,7 @@ use crate::{
     route::Route, service::{AppServiceFactory, HttpServiceFactory}
 };
 use futures::executor::block_on;
-use s4nk4r_service::IntoServiceFactory;
+use loony_service::IntoServiceFactory;
 
 #[derive(Clone)]
 pub struct Data<T>(pub T);

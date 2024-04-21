@@ -124,7 +124,7 @@ async fn main() {
     HttpServer::new(move ||
         App::new()
         .app_data( AppState {
-            name: "s4nk4r".to_owned(),
+            name: "loony".to_owned(),
         })
         .data(db.clone())
         .configure(routes)

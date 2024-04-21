@@ -1267,12 +1267,12 @@ dependencies = [
  "httparse",
  "multipart",
  "pin-project",
- "s4nk4r-futures",
- "s4nk4r-http",
- "s4nk4r-macro",
- "s4nk4r-practise",
- "s4nk4r-service",
- "s4nk4r-test",
+ "loony-futures",
+ "loony-http",
+ "loony-macro",
+ "loony-practise",
+ "loony-service",
+ "loony-test",
  "scylla",
  "serde",
  "serde_json",
@@ -2426,7 +2426,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e86697c916019a8588c99b5fac3cead74ec0b4b819707a682fd4d23fa0ce1ba1"
 
 [[package]]
-name = "s4nk4r-futures"
+name = "loony-futures"
 version = "0.1.0"
 dependencies = [
  "async-std",
@@ -2434,22 +2434,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "s4nk4r-http"
+name = "loony-http"
 version = "0.1.0"
 
 [[package]]
-name = "s4nk4r-macro"
+name = "loony-macro"
 version = "0.1.0"
 
 [[package]]
-name = "s4nk4r-practise"
+name = "loony-practise"
 version = "0.1.0"
 dependencies = [
  "regex",
 ]
 
 [[package]]
-name = "s4nk4r-service"
+name = "loony-service"
 version = "0.1.0"
 dependencies = [
  "futures",
@@ -2457,7 +2457,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "s4nk4r-test"
+name = "loony-test"
 version = "0.1.0"
 dependencies = [
  "async-std",
@@ -2465,7 +2465,7 @@ dependencies = [
  "fxhash",
  "mio 0.7.14",
  "pin-project",
- "s4nk4r-service",
+ "loony-service",
  "tokio",
 ]
 

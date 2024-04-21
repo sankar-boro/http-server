@@ -1,5 +1,5 @@
 [package]
-name = "s4nk4r-http"
+name = "loony-http"
 version = "0.1.0"
 authors = ["Sankar boro <sankar.boro@yahoo.com>"]
 edition = "2018"

@@ -1,5 +1,5 @@
 [package]
-name = "s4nk4r-test"
+name = "loony-test"
 version = "0.1.0"
 authors = ["Sankar boro <sankar.boro@yahoo.com>"]
 edition = "2018"
@@ -12,7 +12,7 @@ fxhash = "0.2.1"
 pin-project = "1.0.1"
 futures-util = "0.3.15"
 tokio = { version = "1.1.0", features = ["full"] }
-s4nk4r-service = { path = "../s4nk4r-service" }
+loony-service = { path = "../loony-service" }
 
 [dependencies.async-std]
 version = "1.7.0"
