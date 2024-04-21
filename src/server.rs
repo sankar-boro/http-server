@@ -51,6 +51,7 @@ where F: Fn() -> I + Send + Clone + 'static,
     pub fn run(&mut self) {
         self.start();
         let a = self.builder.run();
+        println!("Http Server is running on Port: 3005");
         self.accept(a);
     }
 

@@ -131,4 +131,5 @@ async fn main() {
         .route(route::get("/").to(index))
     )
     .run();
+
 }   

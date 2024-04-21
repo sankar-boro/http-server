@@ -30,7 +30,7 @@ impl<'a> Response<'a> {
                 let service = self.routes.get(prefix_uri.to_owned());
                 let mut _params = Vec::new();
                 if main.len() == 2 {
-                    _params.push(main[1].clone().to_string());
+                    _params.push(main[1].to_string());
                 }
                 if let Some(s) = service {
                     let sr = ServiceRequest(HttpRequest { url: String::from(path), extensions: self.extensions.clone(), params: Some(_params)  });

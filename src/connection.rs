@@ -42,5 +42,6 @@ pub async fn pg_connection() -> Pool {
   cfg.password = Some(pg_db_password);
   cfg.manager = Some(ManagerConfig { recycling_method: RecyclingMethod::Fast });
   let pool: Pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
+  println!("Connected to Postgres");
   pool
 }
